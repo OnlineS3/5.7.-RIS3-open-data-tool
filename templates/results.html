@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Open Data Tool</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var maxLen = 150;
+            var more = "Read more";
+            var less = " Show less";
+            $('.more').each(function() {
+                var content = $(this).html();
+                if($.trim(content).length > maxLen) {
+                    var truncated = content.substr(0, maxLen);
+                    var removed = content.substr(maxLen, $.trim(content).length);
+                    var html = truncated + '<span class="ellipses">...</span><span class="morecontent"><span>' + removed + '</span><a href="" class="morelink">' + more + '</a></span>';
+                    $(this).html(html);
+                }
+            });
+            $(".morelink").click(function(){
+                if($(this).hasClass("less")) {
+                    $(this).removeClass("less");
+                    $(this).html(more);
+                } else {
+                    $(this).addClass("less");
+                    $(this).html(less);
+                }
+                $(this).parent().prev().toggle();   //Toggle ellipses
+                $(this).prev().toggle();            //Toggle 'hidden' content
+                return false;
+            });
+
+            $(".collapse").on('hidden.bs.collapse', function(){
+                $("#frame").hide();
+            });
+        });
+
+
+
+        function loadFrame(url) {
+            $("#frame").show();
+            $("#frame").attr('src', url);
+            $('html, body').animate({
+                scrollTop: $("#frame").offset().top
+            }, 2000);
+        }
+    </script>
+    <style type="text/css">
+        .morecontent span {
+            display: none;
+        }
+        .morelink {
+            display: inline-block;
+        }
+        .clickable td:last-child:after {
+            font-family: 'Glyphicons Halflings';
+            content: "\e114";
+        }
+        .clickable.collapsed td:last-child:after {
+            content: "\e080";
+        }
+    </style>
+
+    {% load static %}
+    {% static "C:\Users\Ryan Faulkner\Documents\Online S3\Applications\OnlineDataTool\static" as baseUrl %}
+</head>
+<body>
+<div class="page-header">
+    <img src="{% static "img/OnlineS3.png" %}" alt="Online S3" width="80" height="40" align="left"/><h1>Online S3</h1>
+</div>
+<h3>Step 5 - Policy Mix: Open Data Tool</h3>
+<div class="container-fluid">
+    <div class="panel">
+        <div class="panel-heading">
+            <form role="form" method="get" action="/results/">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="input-group input-group-lg">
+                            <input type="text" class="form-control input-lg" name="q" placeholder="Search" value="{{ query }}"/>
+                            <div class="input-group-btn">
+                                <button type="submit" class="btn btn-default btn-lg" ><span class="glyphicon glyphicon-search"></span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <h4>{{ result.count }} datasets found for "{{ query }}"</h4>
+        </div>
+        <div class="panel-body">
+            <table class="table table-hover">
+                <th style="width: 10%">Organisation</th>
+                <th style="width: 30%">Title</th>
+                <th style="width: 60%">Description</th>
+                {% for r in result.results %}
+                <tr data-toggle="collapse" data-target="#accordion{{ forloop.counter }}" class="clickable collapsed">
+                    <td>
+                        <img src="{{ baseUrl }}/img/{{ r.organization.title }}.png"/>
+                        <img src="{{ r.organization.image_url }}"/>
+                        {{ r.organization.title }}
+                    </td>
+                    <td>{{ r.title }}</td>
+                    <td><span class="more">{{ r.description }}</span></td>
+                </tr>
+                <tr id="accordion{{ forloop.counter }}" class="collapse">
+                    <td colspan="3">
+                        <div class="container">
+                            <h3>Resources</h3>
+                            <div class="fluid-container">
+                                {% for d in r.resources %}
+                                    {% if d.name is not None %}
+                                        <h4>{{ d.name }}</h4>
+                                    {% endif %}
+                                    <dd>
+                                        {{ d.description }}
+                                    {% if d.name == "Table" %}
+                                        <a class="fa fa-table" onclick="loadFrame('{{ d.url|safe }}')"></a>
+                                    {% elif d.name == "Graph"%}
+                                        <a class="fa fa-bar-chart" onclick="loadFrame('{{ d.url|safe }}')"></a>
+                                    {% elif d.name == "Map"%}
+                                        <a class="fa fa-map-marker" onclick="loadFrame('{{ d.url|safe }}')"></a>
+                                    {% elif d.format == "application/pdf" %}
+                                        <a href="{{ d.url }}" class="fa fa-file-pdf-o" aria-hidden="true" target="_blank"></a>
+                                    {% elif d.format == "application/csv" or d.format == "text/tab-separated-values" %}
+                                        <form id="plot{{ forloop.counter }}" method="get" action="/resource/">
+                                            <a href="{{ d.url }}" class="fa fa-file-excel-o" aria-hidden="true" target="_blank"></a>
+                                            <input type="hidden" name="l" value="{{ d.url }}">
+                                            <a class="fa fa-bar-chart" onclick="$(this).closest('form').submit()"></a>
+                                        </form>
+                                    {% elif d.format == "application/zip" %}
+                                        <a href="{{ d.url }}" class="fa fa-file-archive-o" aria-hidden="true" target="_blank"></a>
+                                    {% elif d.format == "text/html" %}
+                                        <a href="{{ d.url }}" class="fa fa-external-link" aria-hidden="true" target="_blank"></a>
+                                    {% else %}
+                                        <a href="{{ d.url }}" class="fa fa-file-o" aria-hidden="true" target="_blank"></a>
+                                        <a href="#" onclick="loadFrame('{{ d.url|safe }}')">Preview</a>
+                                    {% endif %}
+                                    </dd>
+                                {% endfor %}
+                            </div>
+                        </div>
+{#                        <table>#}
+{#                            <th style="width:40%">Title</th>#}
+{#                            <th style="width:40%">Description</th>#}
+{#                            <th style="width:20%">Format</th>#}
+{#                            {% for d in r.resources %}#}
+{#                            <tr>#}
+{#                                {% if d.name == "Table" %}#}
+{#                                    <td colspan="3"><button class="fa fa-table" onclick="loadFrame('{{ d.url|safe }}')"/></td>#}
+{#                                {% elif d.name == "Graph"%}#}
+{#                                    <td colspan="3"><button class="fa fa-bar-chart" onclick="loadFrame('{{ d.url|safe }}')"/></td>#}
+{#                                {% elif d.name == "Map"%}#}
+{#                                    <td colspan="3"><button class="fa fa-map-marker" onclick="loadFrame('{{ d.url|safe }}')"/></td>#}
+{#                                {% else %}#}
+{#                                    <td> {{ d.name }} </td>#}
+{#                                    <td> {{ d.description }} </td>#}
+{#                                    {% if d.format == "application/pdf" %}#}
+{#                                        <td><a href="{{ d.url }}" class="fa fa-file-pdf-o" aria-hidden="true" target="_blank"></a></td>#}
+{#                                    {% elif d.format == "application/csv" or d.format == "text/tab-separated-values" %}#}
+{#                                        <td>#}
+{#                                            <a href="{{ d.url }}" class="fa fa-file-excel-o" aria-hidden="true" target="_blank"></a>#}
+{#                                            <form id="plot{{ forloop.counter }}" method="get" action="/resource/">#}
+{#                                                <input type="hidden" name="l" value="{{ d.url }}">#}
+{#                                                <button type="submit" class="btn btn-default"><i class="fa fa-bar-chart" aria-hidden="true"></i></button>#}
+{#                                            </form>#}
+{#                                        </td>#}
+{#                                    {% elif d.format == "application/zip" %}#}
+{#                                        <td><a href="{{ d.url }}" class="fa fa-file-archive-o" aria-hidden="true" target="_blank"></a></td>#}
+{#                                    {% elif d.format == "text/html" %}#}
+{#                                        <td><a href="{{ d.url }}" class="fa fa-external-link" aria-hidden="true" target="_blank"></a></td>#}
+{#                                    {% else %}#}
+{#                                        <td>#}
+{#                                            <a href="{{ d.url }}" class="fa fa-file-o" aria-hidden="true" target="_blank"></a>#}
+{#                                            <button onclick="loadFrame('{{ d.url|safe }}')">Preview</button>#}
+{#                                        </td>#}
+{#                                    {% endif %}#}
+{#                                {% endif %}#}
+{#                            </tr>#}
+{#                            {% endfor %}#}
+{#                        </table>#}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            <div>Page {{ pagination.page }}: {{ pagination.start }}-{{ pagination.end }} of {{ result.count }}</div>
+            <form method="get" action="/results/" class="paginator">
+                <input type="hidden" name="q" value="{{ query }}">
+                <input type="number" name="r" value="{{ rows }}" min="1" max="100"> Records per Row
+                <div class="btn-toolbar" role="toolbar">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-info {{ pagination.hide_prev }}" type="submit" name="p" value="{{ pagination.previous }}"><span class="glyphicon glyphicon-chevron-left"></span></button>
+                        {% for page in pages.items %}
+                            <button type="submit" class="btn btn-default" name="p" value="{{ page.0 }}">{{ page.1 }}</button>
+                        {% endfor %}
+                        <button class="btn btn-info {{ pagination.hide_next }}" type="submit" name="p" value="{{ pagination.next }}"><span class="glyphicon glyphicon-chevron-right"></span></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="fluid-container">
+    <iframe id="frame" src="" frameborder="0" style="width:100%; height:1000px; border:0; align:middle;" hidden></iframe>
+</div>
+</body>
+</html>

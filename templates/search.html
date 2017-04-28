@@ -1,0 +1,9 @@
+<form method="get" action="/results/" class="navbar-form pull-right">
+    <input id="searchBox" list="tags" name="q" placeholder="Search">
+    <datalist id="tags">
+        {% for t in tags %}
+            <option value="{{ t }}">
+        {% endfor %}
+    </datalist>
+    <input type="submit" class="btn" value="Search">
+</form>

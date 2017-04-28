@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8"/>
+	<meta http-equiv="x-ua-compatible" content="ie=edge"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Open Data Tool Application</title>
+    {% load static %}
+    {% load custom %}
+    <link rel="stylesheet" href="{% static "css/layout.css" %}"/>
+	<link rel="stylesheet" href="{% static "css/header.css" %}"/>
+	<link rel="stylesheet" href="{% static "css/footer.css" %}"/>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/2.8.0/css/flag-icon.css"/>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+
+    <script type="text/javascript">
+    //Set-up bookmarks
+    var bookmarks = {};
+    $(document).ready(function() {
+        {% for bookmark in bookmarks.items %}
+        bookmarks['{{ bookmark.0 }}'] = "{{ bookmark.1|safe }}";
+        {% endfor %}
+        if(jQuery.isEmptyObject(bookmarks)) {
+            $('#bookmarks').append('<li id="init" class="list-group-item">No bookmarks to show.<br/>Add bookmarks by clicking (<span class="fa fa-bookmark-o"/>)</li>');
+        } else {
+            for (var id in bookmarks) {
+                if (bookmarks.hasOwnProperty(id)) {
+                    var programme = bookmarks[id].replace(/<\/?[^>]+(>|$)/g, "").split(" ")[0];
+                    var acronym = bookmarks[id].match(/<strong>(.*?)<\/strong>/g);
+                    var title = bookmarks[id].match(/<br\/>(.*?)/g);
+                    $('#bookmarks').append('<li id="' + id + '" class="list-group-item"><a href="?' + programme + '=on&query=' + id + '&queryContext=id">' + bookmarks[id] + '</a> <a onclick="updateBookmark(\'' + programme + '\',\'' + id + '\',\'' + acronym + '\',\'' + title + '\');"><span class="fa fa-times-circle"/></a></li>');
+                    $('#bm_' + id).removeClass('fa-bookmark-o').addClass('fa-bookmark');
+                }
+            }
+        }
+    });
+    function updateBookmark(programme, id, acronym, title) {
+        if($('#init').length > 0)
+            $('#init').remove();
+
+        if(!(id in bookmarks)) {
+            bookmarks[id] = "<strong>" + acronym + "</strong> <sup>" + programme + "</sup><br/>" + title;
+            $('#bookmarks').append('<li id="' + id + '" class="list-group-item"><a href="?' + programme + '=on&query=' + id + '&queryContext=id">' + bookmarks[id] + '</a> <a onclick="updateBookmark(\'' + programme + '\',\'' + id + '\',\'' + acronym + '\',\'' + title + '\');"><span class="fa fa-times-circle"/></a></li>');
+            $('#bm_' + id).removeClass('fa-bookmark-o').addClass('fa-bookmark');
+        } else {
+            delete bookmarks[id];
+            $('#' + id).remove();
+            $('#bm_' + id).removeClass('fa-bookmark').addClass('fa-bookmark-o');
+            if(jQuery.isEmptyObject(bookmarks))
+                $('#bookmarks').append('<li id="init" class="list-group-item">No bookmarks to show.<br/>Add bookmarks by clicking (<span class="fa fa-bookmark-o"/>)</li>');
+        }
+        $.ajax({
+            url: "{% url 'bookmarked' %}",
+            type: "POST",
+            data: JSON.stringify(bookmarks),
+            contentType: "application/json",
+            headers: { "X-CSRFToken": $.cookie("csrftoken") },
+            //success: function() { console.log(JSON.stringify(bookmarks)); }
+        });
+    }
+
+    $(document).ready(function(){
+        $("#queryContext").val("{{ queryContext }}").change();
+        $("#records").val("{{ records }}").change();
+        $("#order").val("{{ order }}").change();
+        $("#sort").change(function() {
+            var $od = $("#order");
+            $od.empty();
+            var id = $(this).val();
+            if (id == '') {
+                $od.hide();
+            } else {
+                if (id == 'Query')
+                    var op={"A-Z: Ascending": "a-z", "Z-A: Descending": "z-a"}
+                else
+                    var op={"Earliest First": "asc", "Latest First": "dsc"}
+                $.each(op, function(k, v) {
+                    $od.append($("<option></option>").attr("value", v).text(k));
+                });
+                $od.show();
+            }
+        });
+        $("#sort").val("{{ sort }}").change();
+
+        $('#bookmarks').affix({
+            offset: {
+                top: 410
+            }
+        });
+
+        var maxLen = 250;
+        var more = "Read more";
+        var less = " Show less";
+        $('.more').each(function(){
+            var content = $(this).html();
+            if($.trim(content).length > maxLen){
+               var truncated = content.substr(0, maxLen);
+               var removed = content.substr(maxLen, $.trim(content).length);
+               var html = truncated + '<span class="ellipses">...</span><span class="moreContent"><span>' + removed + '</span><a href="" class="moreLink">' + more + '</a></span>';
+               $(this).html(html);
+            }
+        });
+        $(".moreLink").click(function() {
+            if($(this).hasClass("less")){
+               $(this).removeClass("less");
+               $(this).html(more);
+            }else{
+               $(this).addClass("less");
+               $(this).html(less);
+            }
+            $(this).parent().prev().toggle();   //Toggle ellipses
+            $(this).prev().toggle();            //Toggle 'hidden' content
+            return false;
+        });
+    });
+
+    $(document).on('click', '.panel-heading span.clickable', function() {
+        var $this = $(this);
+        if(!$this.hasClass('panel-collapsed')){
+            $this.parents('.panel').find('.panel-body').slideUp();
+            $this.addClass('panel-collapsed');
+            $this.find('i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        }else{
+            $this.parents('.panel').find('.panel-body').slideDown();
+            $this.removeClass('panel-collapsed');
+            $this.find('i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        }
+    });
+    </script>
+    <style type="text/css">
+    .moreContent span {
+        display: none;
+    }
+    .moreLink {
+        display: inline-block;
+    }
+    .clickable{
+        cursor: pointer;
+    }
+
+    .panel-heading span {
+        margin-top: -20px;
+        font-size: 15px;
+    }
+
+    .affix {
+        top: 20px;
+        width: inherit;
+    }
+    .affix-top {
+        width: inherit;
+    }
+    </style>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="mainpage" class="site">
+
+<!-- site header -->
+<header id='site-header'>
+
+	<nav id='top-menu'>
+		<ul>
+			<li><a href='http://www.onlines3.eu/'>Online S3 Project</a></li>
+			<li class="active"><a href='#'><i class="fa fa-lightbulb-o" aria-hidden="true"></i>Applications</a></li>
+			<li><a href='#'><i class="fa fa-cog" aria-hidden="true"></i>Toolbox</a></li>
+			<li><a href='#'><i class="fa fa-bar-chart" aria-hidden="true"></i>Analytics</a></li>
+			<li><a href='#'><i class="fa fa-life-ring" aria-hidden="true"></i></i>Support</a></li>
+			<li><a href='#'><i class="fa fa-envelope-o" aria-hidden="true"></i>Contact</a></li>
+		</ul>
+	</nav>
+
+	<div id='header-main'>
+		<div class='top-section'>
+			<div class='headers'>
+				<img class='logo-img' src="{% static 'img/logo.png' %}" width='77'>
+				<div>
+					<p class="heading"><a href='#'>Online S3 Platform</a></p>
+					<p class="sub-heading">RIS3 Open Data Tool</p>
+				</div>
+			</div>
+
+			<div class="social-links">
+				<a href="https://twitter.com/online_s3" title="Twitter" target="_blank"><i class="fa fa-twitter-square" aria-hidden="true"></i></a>
+				<a href="https://plus.google.com/102042915278982824881" title="Google+" target="_blank"><i class="fa fa-google-plus-square" aria-hidden="true"></i></a>
+				<a href="https://www.youtube.com/channel/UCuYNnd9rdrN_EbF5_P0Nmog" title="YouTube" target="_blank"><i class="fa fa-youtube-square" aria-hidden="true"></i></a>
+				<!-- <a href="https://twitter.com/online_s3" title="Twitter" target="_blank">L</a>  -->
+				<!-- <a href="https://plus.google.com/102042915278982824881" title="Google+" target="_blank">G</a>  -->
+				<!-- <a href="https://www.youtube.com/channel/UCuYNnd9rdrN_EbF5_P0Nmog" title="YouTube" target="_blank">X</a>  -->
+				<!-- <a href="http://www.onlines3.eu/feed/" title="Newsfeed" target="_blank">R</a> -->
+			</div>
+		</div>
+
+		<div class='bottom-section'>
+			<div class="menu">
+				<ul>
+					<li><a href="#">About</a></li>
+					<li><a href="#">Use cases</a></li>
+					<li><a id='tool' href='#'>Access to application</a></li>
+				</ul>
+			</div>
+
+			<div class='user-btns'>
+				<button class='login-btn'> Sign in </button>
+				<button class='register-btn'> Sign up </button>
+			</div>
+		</div>
+
+	</div>
+
+	<div id='breadcrumb'>
+		<ul>
+			<li><a href='#'>Online S3 Platform</a></li>
+			<li><a href='#'>Policy Mix</a></li>
+			<li><span>RIS3 Open Data Tool</span></li>
+		</ul>
+	</div>
+
+</header>
+<!-- site header -->
+
+<!-- Application's space -->
+<div class="site-content">
+
+	<article id="main-content">
+		<h2>RIS3 Open Data Tool</h2>
+
+        {% if query == "" %}
+        <h3>Projects and Organisations</h3>
+        <p>
+            Search and access all of the European Commission's information on the lifecycle of projects via the
+            Community Research and Development Information Service (CORDIS): Available information includes grant
+            details, funding and participants, the projects' own Report Summaries, the latest multilingual
+            Results in Brief and links to specific publications and other documents.
+        </p>
+        {% endif %}
+
+        <!-- Form: User Input -->
+        <form role="form" method="get" action="/projects/">
+            <br/>
+            <h4>Search:</h4>
+            <!-- Unrestricted Search -->
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control input-lg" name="query" placeholder="Search" value="{{ query }}"/>
+                        <div class="input-group-btn">
+                            <select class="btn btn-default" name="queryContext" id="queryContext">
+                                <option label="Title">title</option>
+                                <option label="Acronym">acronym</option>
+                                <option label="ID">id</option>
+                                <option label="Objective">objective</option>
+                                <option label="Coordinator">coordinator</option>
+                                <option label="Coordinator Country">coordinatorCountry</option>
+                                <option label="Call">call</option>
+                                <option label="Programme">programme</option>
+                                <option label="Funding Scheme">fundingScheme</option>
+                            </select>
+                            <button type="button" class="btn btn-default" data-toggle="collapse" data-target="#filters"><span class="fa fa-filter"/></button>
+                            <button type="submit" class="btn btn-default btn-lg" ><span class="glyphicon glyphicon-search"></span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div id="filters" class="collapse">
+                <div class="row" style="text-align: center">
+                    <!-- Framework Selection -->
+                    <h4>Frameworks</h4>
+                    <label class="checkbox-inline"><input type="checkbox" name="h2020" checked disabled="disabled"/><img src="{%  static "img/H2020.png" %}" alt="H2020" height="52px" width="52px"/></label>
+                    <label class="checkbox-inline"><input id="fp7" type="checkbox" name="fp7" {% if 'fp7' in fp %} checked {% endif %}/><img src="{%  static "img/cordisfp7projects.png" %}" alt="FP7" height="30px" width="52px"/></label>
+                    <label class="checkbox-inline"><input id="fp6" type="checkbox" name="fp6" {% if 'fp6' in fp %} checked {% endif %}/><img src="{%  static "img/cordisfp6projects.png" %}" alt="FP6" height="52px" width="52px"/></label>
+                    <label class="checkbox-inline"><input id="fp5" type="checkbox" name="fp5" {% if 'fp5' in fp %} checked {% endif %}/><img src="{%  static "img/cordisfp5projects.png" %}" alt="FP5" height="52px" width="52px"/></label>
+    {#              <label class="checkbox-inline"><input type="checkbox" name="fp4"/>FP4</label>                 #}
+    {#              <label class="checkbox-inline"><input type="checkbox" name="fp3"/>FP3</label>                 #}
+    {#              <label class="checkbox-inline"><input type="checkbox" name="fp2"/>FP2</label>                 #}
+                </div>
+                <br/>
+                <div>
+                    <!-- Filters -->
+                    <div class="row" style="float: left">
+                       <div class="input-group">
+                           Sort By:
+                            <select class="btn btn-default btn-xs" name="sort" id="sort">
+                                <option/>
+                                <option>Query</option>
+                                <option>Start Date</option>
+                                <option>End Date</option>
+                            </select>
+                            <select class="btn btn-default btn-xs" name="order" id="order"></select>
+                        </div>
+                    </div>
+                    <div class="row" style="float: right;">
+                       Show:
+                        <select class="btn btn-default btn-xs" name="show" id="records">
+                            <option>1</option>
+                            <option>5</option>
+                            <option>10</option>
+                            <option>20</option>
+                            <option>50</option>
+                            <option>100</option>
+                            <option>All</option>
+                        </select>
+                        per page
+                    </div>
+                </div>
+            </div>
+            <!-- End Filters -->
+        </form>
+        <!-- End Form -->
+        {% if query != "" %}
+        <div class="row">
+            <h3 style="text-align: center;">{{ query }}</h3>
+            <!-- Records -->
+            <p style="text-align: center;">
+                Records {{ projects.start_index }}-{{ projects.end_index }} of {{ projects.count }}
+            </p>
+        </div>
+        <ul class="nav nav-tabs">
+            <li>Results: </li>
+            <li class="active"><a data-toggle="tab" href="#projects">Projects</a></li>
+            <li><a data-toggle="tab" href="#organisations">Organisations</a></li>
+{#            <li><a data-toggle="tab" href="#data">Data</a></li>#}
+        </ul>
+
+        <div class="tab-content">
+            <div id="projects" class="tab-pane fade in active">
+                <!-- Individual Projects -->
+                {% if queryContext == "id" %}
+                <h4>Project Overview:</h4>
+                {% elif queryContext == 'coordinator' %}
+                <h4>Projects Coordinated:</h4>
+                {% elif queryContext == "fundingScheme" %}
+                <h4>Projects Funded:</h4>
+                {% else %}
+                <br/>
+                {% endif %}
+
+                {% for project in projects %}
+                <div class="panel panel-default">
+                    <div class="panel-body media">
+                        <div class="media-left">
+                            {% if 'H2020' in project.4 %}
+                            <img src="{%  static "img/H2020.png" %}" alt="H2020" height="52px" width="52px"/>
+                            {% elif 'FP7' in project.4 %}
+                            <img src="{%  static "img/cordisfp7projects.png" %}" alt="FP-7" height="30px" width="52px"/>
+                            {% elif 'FP6' in project.4 %}
+                            <img src="{%  static "img/cordisfp6projects.png" %}" alt="FP-6" height="52px" width="52px"/>
+                            {% elif 'FP5' in project.4 %}
+                            <img src="{%  static "img/cordisfp5projects.png" %}" alt="FP-5" height="52px" width="52px"/>
+                            {% endif %}
+                        </div>
+                        <div class="media-body">
+                            <h4 class="media-heading">[PROJECT] <strong>{{ project.2 }}</strong> - <a href="?{% url_replace query=project.1 queryContext="id" %}">{{ project.7 }}</a></h4>
+                            <strong>ID: </strong>{{ project.1 }} <a onclick="updateBookmark('{{ project.4|extract_programme|safe }}', '{{ project.1 }}', '{{ project.2 }}', '{{ project.7 }}');"><span id="bm_{{ project.1 }}" class="fa fa-bookmark{% if not bookmarks|parse_id:project.1 %}-o{% endif %}"/></a><br/>
+                            <strong>Website: </strong><a href="http://{{ project.10 }}">{{ project.10 }} <span class="fa fa-external-link"/></a><br/>
+                            <strong>Start date: </strong>{{ project.8 }}, <strong>End date: </strong>{{ project.9 }}<br/>
+                            <strong>Status: </strong>{{ project.3|title }} {% if project.3 == 'SIGNED' %}<span class="fa fa-handshake-o"></span>{% elif project.3 == 'TERMINATED' %}<span class="fa fa-ban"></span>{% endif %}<br/>
+                            <strong>Objective: </strong>{% if queryContext != 'id' %}<span class="more">{{ project.11 }}</span>{% else %}{{ project.11 }}{% endif %}<br/>
+                            <strong>Coordinator: </strong><a href="?{% url_replace query=project.16 queryContext="coordinator" %}">{{ project.16|title }}</a>, <a href="?{% url_replace query=project.17 queryContext="coordinatorCountry" %}">{{ project.17 }} <span class="flag-icon flag-icon-{{ project.17|country_code }}"/></a><br/>
+                            <strong>Call: </strong><a href="?{% url_replace query=project.14 queryContext="call" %}">{{ project.14 }}</a><br/>
+                            <strong>Programme: </strong>
+                            {% for p in project.4|split %}
+                                <a href="?{% url_replace query=p queryContext="programme" %}">{{ p }}</a>
+                            {% endfor %}<br/>
+                            <strong>Funding: </strong><a href="?{% url_replace query=project.15 queryContext="fundingScheme" %}">{{ project.15 }}</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                {% if queryContext == 'id' or queryContext == 'coordinator' %}
+                <h4>More Info:</h4>
+                <ul class="nav nav-tabs">
+                    {% if queryContext == 'id' %}<li class="active"><a data-toggle="tab" href="#Consortium">Consortium</a> </li>{% endif %}
+                    <li><a data-toggle="tab" href="#Map">Map</a> </li>
+                    {% if queryContext == 'id' %}<li><a data-toggle="tab" href="#Finance">Finance</a> </li>{% endif %}
+                </ul>
+                <div class="tab-content">
+                    <!-- Consortium List group -->
+                    {% if queryContext == 'id' %}
+                    <div id="Consortium" class="tab-pane fade in active">
+                        <br/>
+                        <div class="row">
+                            {% for i, o in org.iterrows %}
+                            <div class="col-sm-6 col-md-4">
+                                <div class="thumbnail" {% if o.endOfParticipation %}style="background: lightcoral" {% endif %}>
+                                    <div class="caption" style="text-align: left;">
+                                        <h4>{{ o.shortName }} {% if o.endOfParticipation %}<span class="badge">Participation Ended</span>{% endif %}</h4>
+                                        <h6>{{ o.name }}<br/>{{ o.street|title }}, {{ o.city|title }}, {{ o.postCode }}, {{ o.country }}</h6>
+                                        <strong>Role: </strong>{{ o.role|title }}<br/>
+                                        <strong>Activity Type: </strong>{{ o.activityType }}<br/>
+                                        <strong>URL: </strong><a href="http://{{ o.organizationUrl }}" target="_blank">{{ o.organizationUrl }} <span class="fa fa-external-link"/></a><br/>
+                                        {% if not o.contactType|is_nan %}
+                                        <strong>Contact: </strong> {{ o.contactType }}<br/>
+                                            <br/>{{ o.contactTitle }} {{ o.contactFirstNames }} {{ o.contactLastNames }}<br/>
+                                            {{ o.contactFunction }}<br/>
+                                            {{ o.contactTelephoneNumber }}, {{ o.contactFaxNumber }}, {{ o.contactEmail }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div id="Map" class="tab-pane">
+                        <br/>
+                        <div id="map" style="height: 400px;width: 100%"></div>
+                        <script type="text/javascript" src="http://maps.google.com/maps/api/js?key=AIzaSyDdJDbTCphVAHwZNFQGBtiC1MY4Wma7kTM&region=EU"></script>
+                        <script type="text/javascript">
+                        $('a[data-toggle="tab"]').on("shown.bs.tab", function(e) {
+                            if($(e.target).attr("href") == '#Map')
+                                google.maps.event.trigger(document.getElementById("map"), 'resize');
+                        });
+                        var delay = 100;
+                        var infowindow = new google.maps.InfoWindow();
+                        var latlng = new google.maps.LatLng(51.454410, -0.904908);
+                        var mapOptions = {
+                            zoom: 5,
+                            center: latlng,
+                            mapTypeId: google.maps.MapTypeId.ROADMAP
+                        };
+                        var geocoder = new google.maps.Geocoder();
+                        var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+                        var bounds = new google.maps.LatLngBounds();
+                        var lineSymbol = {
+                            path: 'M 0,-1 0,1',
+                            strokeOpacity: 1,
+                            scale: 1
+                        };
+                        function geocodeAddress(address, marker, next) {
+                            geocoder.geocode({address:address}, function(results, status) {
+                                if(status == google.maps.GeocoderStatus.OK) {
+                                    var p = results[0].geometry.location;
+                                    createMarker(marker, p.lat(), p.lng());
+                                    if(nextAddress == 1) {
+                                        latlng = new google.maps.LatLng(p.lat(), p.lng());
+                                    } else {
+                                        {% if queryContext == 'id' %}
+                                        new google.maps.Polyline({
+                                            path: [
+                                                latlng,
+                                                new google.maps.LatLng(p.lat(), p.lng())
+                                            ],
+                                            strokeColor: '#FF0000',
+                                            strokeOpacity: 0.5,
+                                            strokeWeight: 0.5,
+                                            icons: [{
+                                                icon: lineSymbol,
+                                                offset: '0',
+                                                repeat: '20px'
+                                            }],
+                                            map: map
+                                        });
+                                        {% endif %}
+                                    }
+                                } else {
+                                    if (status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+                                        nextAddress--;
+                                        delay++;
+                                    }
+                                }
+                                next();
+                            }
+                        );
+                        }
+                        function createMarker(add, lat, lng) {
+                            var contentString = add;
+                            var marker = new google.maps.Marker({
+                                position: new google.maps.LatLng(lat, lng),
+                                map: map
+                            });
+                            google.maps.event.addListener(marker, 'click', function() {
+                                infowindow.setContent(contentString);
+                                infowindow.open(map,marker);
+                            });
+                            bounds.extend(marker.position);
+                        }
+                        var markers = [];
+                        var locations = [];
+                        {% for i, o in org.iterrows %}
+                            var address = "{{ o.street|title }}, {{ o.city|title }}, {{ o.postCode }}";
+                            markers.push("<strong>{{ o.name }}</strong><br/>" + address + ", " + "{{ o.country }}<br/>{{ o.projectAcronym }} Project {{ o.role|title }}<br/> - {{ o.activityType }}");
+                            locations.push(address);
+                        {% endfor %}
+
+
+                        console.log(locations);
+
+                        var nextAddress = 0;
+                        function theNext() {
+                            if (nextAddress < locations.length) {
+                                setTimeout('geocodeAddress("'+locations[nextAddress]+'", "'+markers[nextAddress]+'", theNext)', delay);
+                                nextAddress++;
+                            } else {
+                                map.fitBounds(bounds);
+                            }
+                        }
+                        theNext();
+                        </script>
+                        <!-- Map End -->
+                    </div>
+                    <br/>
+                    {% if queryContext == 'id' %}
+                    <div id="Finance" class="tab-pane">
+                    <h5>Breakdown</h5>
+                    <div class="row">
+                        <input id="total" type="hidden" value="{{ projects.0.12 }}"/>
+                        <input id="max" type="hidden" value="{{ projects.0.13 }}"/>
+                        <!-- Pie chart -->
+                        <script src="https://code.highcharts.com/highcharts.js"></script>
+                        <!-- <script src="https://code.highcharts.com/modules/exporting.js"></script> -->
+                        <div id="container" style="width:100%; height:400px; margin:0 auto"></div>
+                        <script type="application/javascript">
+                            var max = parseFloat($("#max").val().replace(',','.'));
+                            var total = parseFloat($("#total").val().replace(',','.'));
+                            var dict = [];
+                            {% for i, o in org.iterrows %}
+                                var contrib = parseFloat("{{ o.ecContribution }}".replace(',','.'));
+                                if(!isNaN(contrib)) {
+                                    dict.push({
+                                        name: "{{ o.shortName }}",
+                                        val: contrib,
+                                        y: contrib / total
+                                    });
+                                }
+                            {% endfor %}
+                            Highcharts.chart('container', {
+                                chart: {
+                                    plotBackgroundColor: null,
+                                    plotBorderWidth: null,
+                                    plotShadow: false,
+                                    type: 'pie'
+                                },
+                                title: {
+                                    text: ''
+                                },
+                                tooltip: {
+                                    pointFormat: '{series.name}: <br/><b>€{point.val:.2f}</b><br/><b>{point.percentage:.1f}%</b>'
+                                },
+                                plotOptions: {
+                                    pie: {
+                                        allowPointSelect: true,
+                                        cursor: 'pointer',
+                                        dataLabels: {
+                                            enabled: true,
+                                            format: '<b>{point.name}</b>: <br/><b>€{point.val:.2f}</b><br/>{point.percentage:.1f} %',
+                                            style: {
+                                                color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                                            }
+                                        }
+                                    }
+                                },
+                                series: [{
+                                    name: 'Contribution',
+                                    colorByPoint: true,
+                                    data: dict
+                                }]
+                            }, function(chart) { //on complete
+                                chart.renderer.text('Total Cost: €' + total + '<br/>Max Contribution:  €' + max , 100, 100).add();
+                            });
+                        </script>
+                        <!-- -->
+                    </div>
+                    </div>
+                    {% endif %}
+                    <!-- -->
+                </div>
+                {% endif %}
+
+                {% if queryContext != 'id' %}
+                <!-- Pagination -->
+                <nav aria-label="Pager">
+                    <ul class="pager">
+                        {% if projects.has_previous %}
+                            <li class="previous"><a href="?{% url_replace page=projects.previous_page_number %}"><span aria-hidden="true">&larr;</span> Previous</a></li>
+                        {% endif %}
+                        <span class="current">
+                            Page {{ projects.number }} of {{ projects.paginator.num_pages }}.
+                        </span>
+                        {% if projects.has_next %}
+                            <li class="next"><a href="?{% url_replace page=projects.next_page_number %}">Next <span aria-hidden="true">&rarr;</span></a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                <!-- Pagination End -->
+                {% endif %}
+
+            </div>
+            <div id="organisations" class="tab-pane">
+                <br/>
+                <div id="organisations"></div>
+            </div>
+
+            <script type="application/javascript">
+                $(document).ready(function() {
+                    {% for i, o in org.iterrows %}
+                    if($('#{{ o.id|stringformat:"d" }}').length == 0)
+                        $("#organisations").append('<div id="{{ o.id|stringformat:"d" }}" class="panel panel-default"><div class="panel-body media"><div class="media-left"><span class="fa fa-users"/></div><div class="media-body"> <h4 class="media-heading">[ORGANISATION] <strong> {{ o.shortName }} - </strong>{{ o.name }}</h4> <strong>ID: </strong>{{ o.id|stringformat:"d" }}<br/> <strong>URL: </strong><a target="_blank" href="http://{{ o.organizationUrl }}">{{ o.organizationUrl }} <span class="fa fa-external-link"/></a><br/> <strong>Address: </strong>{{ o.street }}, {{ o.city }}, {{ o.postCode }}, {{ o.country }}<br/> <strong>Projects: </strong><br/> <ul id="{{ o.id|stringformat:"d" }}_pj" class="list-group"></ul> </div> </div> </div>');
+                    $("#{{ o.id|stringformat:"d" }}_pj").append('<li class="list-group-item" {% if o.endOfParticipation %} style="text-decoration: line-through;"{% endif %}><span class="fa fa-user{% if o.role != 'coordinator' %}-o{% endif %}"/> <strong>{{ o.projectAcronym }}</strong>: {{ o.role|title }} </li>');
+                    {% endfor %}
+                });
+            </script>
+
+{#            <div id="data" class="tab-pane">#}
+{#                <h3>Data Sources</h3>#}
+{#                <p>#}
+{#                    Search and access all of the European Commission's information on the lifecycle of projects via the#}
+{#                    Community Research and Development Information Service(CORDIS): Available information includes grant#}
+{#                    details, funding and participants, the projects' own Report Summaries, the latest multilingual#}
+{#                    Results in Brief and links to specific publications and other documents.#}
+{#                </p>#}
+{##}
+{#                {% for r in result.results %}#}
+{#                <div class="media">#}
+{#                    <div class="media-left">#}
+{#                        <span class="fa fa-bar-chart"/>#}
+{#                    </div>#}
+{##}
+{#                    <div class="media-body">#}
+{#                        <h4 class="media-heading">{{ r.name }}</h4>#}
+{#                        <span class="more">{{ r.description }}</span>#}
+{##}
+{#                        <br/>#}
+{##}
+{#                        <div class="panel panel-default">#}
+{#                            <div class="panel-heading">#}
+{#                                <h6 class="panel-title">Resources</h6>#}
+{#                                <span class="pull-right clickable"><i class="fa fa-chevron-down"></i></span>#}
+{#                            </div>#}
+{##}
+{#                            <div class="panel-body collapse">#}
+{#                                {% for d in r.resources %}#}
+{#                                <div class="media">#}
+{#                                    <div class="media-left">#}
+{#                                        <a href="{{ d.url }}"><span class="fa fa-download"/></a>#}
+{#                                    </div>#}
+{#                                    <div class="media-body">#}
+{#                                        <h4 class="media-heading">{{ d.name }}</h4>#}
+{#                                        <span class="more">{{ d.description }}</span>#}
+{#                                        <br/>#}
+{#                                        <a href="{{ d.url }}" class="btn btn-default btn-xs">{{ d.format }}</a>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                {% endfor %}#}
+{##}
+{#                            </div>#}
+{#                        </div>#}
+{##}
+{#                    </div>#}
+{#                </div>#}
+{#                {% endfor %}#}
+{#            </div>#}
+        </div>
+        {% endif %}
+	</article>
+
+	<aside id='sidebar'>
+		<button class="alt"> Download Guide  <i class="fa fa-file-pdf-o" aria-hidden="true"></i></button>
+		<div></div>
+		<button id="access"> Access to application  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
+        <div></div>
+        <br/>
+        <!-- Bookmarks bar -->
+        <ul id="bookmarks" class="list-group">
+            <li class="list-group-item">Bookmarked Projects <span class="fa fa-bookmark"/></li>
+        </ul>
+        <!-- -->
+	</aside>
+
+</div>
+<!-- Application's space -->
+
+<!-- site footer -->
+<footer id='site-footer'>
+
+	<div id="footer-links">
+        <ul>
+            <li><a href="#"><span>Online S3 Project</span></a></li>
+            <li class="active"><a href="#"><span>Applications</span></a></li>
+            <li><a href="#"><span>Toolbox</span></a></li>
+            <li><a href="#"><span>Analytics</span></a></li>
+            <li><a href="#"><span>Support</span></a></li>
+            <li><a href="#"><span>Contact</span></a></li>
+        </ul>
+        <div id='copyright'>
+            <img src="{% static 'img/logo.png' %}" width="30" alt="online logo">
+            <p>Copyright &copy; 2016-2017 OnlineS3 Project</p>
+        </div>
+    </div>
+
+    <div id="european">
+        <img src="{% static 'img/eu_logo.png' %}" width="85" alt="Co-funded by the European Union">
+
+        <p>
+            Funded by the Horizon 2020 Framework Programme of the European Union.
+        </p>
+    </div>
+
+</footer>
+
+<!-- site footer -->
+
+</div>
+
+</div>

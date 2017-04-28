@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resource</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/2.8.0/css/flag-icon.css">
+</head>
+<body>
+<div class="container">
+    <h3>Select a region:</h3>
+    <select id="regionFilter" class="form-control selectpicker" multiple>
+        {% for ck, cv in meta.iteritems %}
+            <option value="{{ ck }}">{{ cv }}<span class="flag-icon flag-icon-{{ cv }}"></span></option>
+        {% endfor %}
+    </select>
+</div>
+<table class="dynamicTable tableTools table table-hover">
+    <thead>
+    {% for c in table %}
+        <th>{{ c }}</th>
+    {% endfor %}
+    </thead>
+    <tbody>
+    {% for rk, rv in table.iterrows %}
+       <tr id="{{ forloop.counter }}" hidden>
+       {% for ck, cv in rv.iteritems %}
+           <td>
+               {{ cv }}
+               {% if ck == "geo\time" %}
+                   <span class="flag-icon flag-icon-{{ cv }}"></span>
+               {% endif %}
+           </td>
+       {% endfor %}
+       </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+<script type="text/javascript">
+    $("#regionFilter").change(function() {
+       $("tbody tr").hide();
+       var values = [];
+       $(this).find("option:selected").each(function(index, selected){
+           values[index] = $(selected).val();
+        });
+       values.forEach(function(value) {
+           value = parseInt(value) + 1;
+           $('#' + value).show();
+       });
+   });
+   $("#regionFilter").val([]).trigger('change');
+</script>
+</html>
