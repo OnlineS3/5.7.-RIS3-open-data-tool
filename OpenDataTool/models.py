@@ -1,8 +1,8 @@
 from django.db import models
+from django_pandas.managers import DataFrameManager
 
 
 class Project(models.Model):
-    rcn = models.PositiveIntegerField()
     id = models.CharField(max_length=20, primary_key=True)
     acronym = models.CharField(max_length=100)
     status = models.CharField(max_length=100)
@@ -23,14 +23,17 @@ class Project(models.Model):
     participants = models.CharField(max_length=250)
     participantCountries = models.CharField(max_length=250)
     subjects = models.CharField(max_length=250)
+    objects = DataFrameManager()
 
 
 class Organisation(models.Model):
-    projectRcn = models.PositiveIntegerField()
-    projectID = models.ForeignKey(Project)
+    class Meta:
+        unique_together = (("organizationID", "projectID"),)
+    # id = models.AutoField(primary_key=True)
+    projectID = models.CharField(max_length=20)  # ForeignKey(Project)
     projectAcronym = models.CharField(max_length=100)
     role = models.CharField(max_length=100)
-    id = models.CharField(max_length=20, primary_key=True)
+    organizationID = models.CharField(max_length=20)
     name = models.CharField(max_length=250)
     shortName = models.CharField(max_length=100)
     activityType = models.CharField(max_length=100)
@@ -49,3 +52,5 @@ class Organisation(models.Model):
     contactTelephoneNumber = models.CharField(max_length=100)
     contactFaxNumber = models.CharField(max_length=100)
     contactEmail = models.EmailField()
+
+    objects = DataFrameManager()

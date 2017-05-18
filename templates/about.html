@@ -58,9 +58,10 @@
 		<div class='bottom-section'>
 			<div class="menu">
 				<ul>
-					<li><a href="#">About</a></li>
-					<li><a href="#">Use cases</a></li>
-					<li><a id='tool' href='#'>Access to application</a></li>
+					<li><a href="/about/">About</a></li>
+					<li><a href="/guide/">Guide</a></li>
+					<li><a href="/related/">Related Documents</a></li>
+					<li><a id='tool' href='/projects/'>Access to application</a></li>
 				</ul>
 			</div>
 
@@ -74,8 +75,8 @@
 
 	<div id='breadcrumb'>
 		<ul>
-			<li><a href='#'>Online S3 Platform</a></li>
-			<li><a href='#'>Policy Mix</a></li>
+			<li><a href='http://www.s3platform.eu/'>Online S3 Platform</a></li>
+			<li><a href='http://www.s3platform.eu/applications/5-policy-mix/'>Policy Mix</a></li>
 			<li><span>RIS3 Open Data Tool</span></li>
 		</ul>
 	</div>
@@ -91,34 +92,44 @@
 		<h2>About</h2>
 
 		<p>
-			Given the fact that regional profiling is the most prevailing RIS3 method
-			applied essentially by all regions, alongside with the fact that regions use
-			a variety of sources to map out a comprehensive 'picture' of regional assets,
-			Regional assets mapping tool is the main tool for integrating all relevant
-			sources into a web-based dashboard. This application helps RIS3 stakeholders
-			to access basic information in a quick manner.
+			Currently, open data tools are not widely used in non-publicly funded projects. However, the effective use
+            of this tool, facilitates the tracking of project themes and topics in each region which maybe
+            cross-referenced with S3 priorities. The data made available by the tool can be highly valuable in tracking
+            progress towards defined objectives and vision, and to inform the RIS3 update process.
+
+            The RIS3 Open Data Tool is a form of data repository that allows for a finely grained tracking of projects
+            and initiatives implemented in each region with links to respective S3 priorities. Data is mined using an
+            automated collection system which mirrors the CORDIS (Community Research and Development Information
+            Service) database along with additional information extracted from project
+            and coordinator websites.
 		</p>
 
 		<p>The logical steps of the application, based on its methodological description are:</p>
 
 		<ul class='dashed'>
-			<li><i>Step 1.</i> Selection of the <strong>section, time period, regions</strong> and <strong>indicators</strong> the that will be mapped.</li>
-			<li><i>Step 2.</i> Extraction of the selected data in <strong>table</strong> format.</li>
-			<li><i>Step 3.</i> Selection of the appropriate <strong>visualisation</strong> mode for the data.</li>
-			<li><i>Step 4.</i> Description and explanation of <strong>results</strong>.</li>
-			<li><i>Step 5.</i> <strong>Report</strong> synthesis and regional profile overview.</li>
+            <li><i>Step 1.</i> Define a <strong>search term</strong> concerning a <strong>specialisation</strong> of interest, select relevant sources and apply filters to refine your search.</li>
+			<li><i>Step 2.</i> Browse the results to <strong>analyse trends</strong> and potentially further refine your search.</li>
+			<li><i>Step 3.</i> <strong>Bookmark</strong> and <strong>subscribe</strong> to projects and organisations to track the progress of projects and regional specialisations.</li>
 		</ul>
+
+        <div align="center">
+            <img src="{%  static "img/ODT.png" %}" alt="Overview"/>
+        </div>
+        <div align="center">
+            <i>Figure 1 Overview of the functionality of the RIS3 Open Data Tool</i>
+        </div>
+
 
 	</article>
 
 	<aside id='sidebar'>
-
-		<button class="alt"> Download Guide  <i class="fa fa-file-pdf-o" aria-hidden="true"></i></button>
-
+        <a href="/guide/" target="_blank">
+		    <button class="alt"> Download Guide  <i class="fa fa-file-pdf-o" aria-hidden="true"></i></button>
+        </a>
 		<div></div>
-
-		<button> Access to application  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
-
+        <a href="/projects/">
+		    <button> Access to application  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
+        </a>
 	</aside>
 
 </div>

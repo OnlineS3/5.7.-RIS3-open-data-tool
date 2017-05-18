@@ -8,18 +8,25 @@
 	<title>Open Data Tool Application</title>
     {% load static %}
     {% load custom %}
-    <link rel="stylesheet" href="{% static "css/layout.css" %}"/>
-	<link rel="stylesheet" href="{% static "css/header.css" %}"/>
-	<link rel="stylesheet" href="{% static "css/footer.css" %}"/>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/2.8.0/css/flag-icon.css"/>
+    <link rel="stylesheet" href="{% static "css/layout.css" %}"/>
+	<link rel="stylesheet" href="{% static "css/header.css" %}"/>
+	<link rel="stylesheet" href="{% static "css/footer.css" %}"/>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 
     <script type="text/javascript">
+    //Check for notifications
+    $(document).ready(function() {
+        $('#notifications').html('').load(
+            "{% url 'notifications' %}"
+        );
+    });
+
     //Set-up bookmarks
     var bookmarks = {};
     $(document).ready(function() {
@@ -203,9 +210,10 @@
 		<div class='bottom-section'>
 			<div class="menu">
 				<ul>
-					<li><a href="#">About</a></li>
-					<li><a href="#">Use cases</a></li>
-					<li><a id='tool' href='#'>Access to application</a></li>
+					<li><a href="/about/">About</a></li>
+					<li><a href="/guide/">Guide</a></li>
+					<li><a href="/related/">Related Documents</a></li>
+					<li><a id='tool' href='/projects/'>Access to application</a></li>
 				</ul>
 			</div>
 
@@ -219,8 +227,8 @@
 
 	<div id='breadcrumb'>
 		<ul>
-			<li><a href='#'>Online S3 Platform</a></li>
-			<li><a href='#'>Policy Mix</a></li>
+			<li><a href='http://www.s3platform.eu/'>Online S3 Platform</a></li>
+			<li><a href='http://www.s3platform.eu/applications/5-policy-mix/'>Policy Mix</a></li>
 			<li><span>RIS3 Open Data Tool</span></li>
 		</ul>
 	</div>
@@ -232,10 +240,16 @@
 <div class="site-content">
 
 	<article id="main-content">
+
 		<h2>RIS3 Open Data Tool</h2>
 
+        <!-- Notifications -->
+        <div id="notifications">
+            {% include 'notifications.html' %}
+        </div>
+
         {% if query == "" %}
-        <h3>Projects and Organisations</h3>
+        <h4>Projects and Organisations</h4>
         <p>
             Search and access all of the European Commission's information on the lifecycle of projects via the
             Community Research and Development Information Service (CORDIS): Available information includes grant
@@ -349,30 +363,30 @@
                 <div class="panel panel-default">
                     <div class="panel-body media">
                         <div class="media-left">
-                            {% if 'H2020' in project.4 %}
+                            {% if 'H2020' in project.3 %}
                             <img src="{%  static "img/H2020.png" %}" alt="H2020" height="52px" width="52px"/>
-                            {% elif 'FP7' in project.4 %}
+                            {% elif 'FP7' in project.3 %}
                             <img src="{%  static "img/cordisfp7projects.png" %}" alt="FP-7" height="30px" width="52px"/>
-                            {% elif 'FP6' in project.4 %}
+                            {% elif 'FP6' in project.3 %}
                             <img src="{%  static "img/cordisfp6projects.png" %}" alt="FP-6" height="52px" width="52px"/>
-                            {% elif 'FP5' in project.4 %}
+                            {% elif 'FP5' in project.3 %}
                             <img src="{%  static "img/cordisfp5projects.png" %}" alt="FP-5" height="52px" width="52px"/>
                             {% endif %}
                         </div>
                         <div class="media-body">
-                            <h4 class="media-heading">[PROJECT] <strong>{{ project.2 }}</strong> - <a href="?{% url_replace query=project.1 queryContext="id" %}">{{ project.7 }}</a></h4>
-                            <strong>ID: </strong>{{ project.1 }} <a onclick="updateBookmark('{{ project.4|extract_programme|safe }}', '{{ project.1 }}', '{{ project.2 }}', '{{ project.7 }}');"><span id="bm_{{ project.1 }}" class="fa fa-bookmark{% if not bookmarks|parse_id:project.1 %}-o{% endif %}"/></a><br/>
-                            <strong>Website: </strong><a href="http://{{ project.10 }}">{{ project.10 }} <span class="fa fa-external-link"/></a><br/>
-                            <strong>Start date: </strong>{{ project.8 }}, <strong>End date: </strong>{{ project.9 }}<br/>
-                            <strong>Status: </strong>{{ project.3|title }} {% if project.3 == 'SIGNED' %}<span class="fa fa-handshake-o"></span>{% elif project.3 == 'TERMINATED' %}<span class="fa fa-ban"></span>{% endif %}<br/>
-                            <strong>Objective: </strong>{% if queryContext != 'id' %}<span class="more">{{ project.11 }}</span>{% else %}{{ project.11 }}{% endif %}<br/>
-                            <strong>Coordinator: </strong><a href="?{% url_replace query=project.16 queryContext="coordinator" %}">{{ project.16|title }}</a>, <a href="?{% url_replace query=project.17 queryContext="coordinatorCountry" %}">{{ project.17 }} <span class="flag-icon flag-icon-{{ project.17|country_code }}"/></a><br/>
-                            <strong>Call: </strong><a href="?{% url_replace query=project.14 queryContext="call" %}">{{ project.14 }}</a><br/>
+                            <h4 class="media-heading">[PROJECT] <strong>{{ project.1 }}</strong> - <a href="?{% url_replace query=project.0 queryContext="id" %}">{{ project.6 }}</a></h4>
+                            <strong>ID: </strong>{{ project.0 }} <a onclick="updateBookmark('{{ project.3|extract_programme|safe }}', '{{ project.0 }}', '{{ project.1 }}', '{{ project.6 }}');"><span id="bm_{{ project.0 }}" class="fa fa-bookmark{% if not bookmarks|parse_id:project.0 %}-o{% endif %}"/></a><br/>
+                            <strong>Website: </strong><a href="http://{{ project.9 }}">{{ project.9 }} <span class="fa fa-external-link"/></a><br/>
+                            <strong>Start date: </strong>{{ project.7 }}, <strong>End date: </strong>{{ project.8 }}<br/>
+                            <strong>Status: </strong>{{ project.2|title }} {% if project.2 == 'SIGNED' %}<span class="fa fa-handshake-o"></span>{% elif project.2 == 'TERMINATED' %}<span class="fa fa-ban"></span>{% endif %}<br/>
+                            <strong>Objective: </strong>{% if queryContext != 'id' %}<span class="more">{{ project.10 }}</span>{% else %}{{ project.10 }}{% endif %}<br/>
+                            <strong>Coordinator: </strong><a href="?{% url_replace query=project.15 queryContext="coordinator" %}">{{ project.15|title }}</a>, <a href="?{% url_replace query=project.16 queryContext="coordinatorCountry" %}">{{ project.16 }} <span class="flag-icon flag-icon-{{ project.16|country_code }}"/></a><br/>
+                            <strong>Call: </strong><a href="?{% url_replace query=project.13 queryContext="call" %}">{{ project.13 }}</a><br/>
                             <strong>Programme: </strong>
-                            {% for p in project.4|split %}
+                            {% for p in project.3|split %}
                                 <a href="?{% url_replace query=p queryContext="programme" %}">{{ p }}</a>
                             {% endfor %}<br/>
-                            <strong>Funding: </strong><a href="?{% url_replace query=project.15 queryContext="fundingScheme" %}">{{ project.15 }}</a>
+                            <strong>Funding: </strong><a href="?{% url_replace query=project.15 queryContext="fundingScheme" %}">{{ project.14 }}</a>
                         </div>
                     </div>
                 </div>
@@ -666,9 +680,13 @@
 	</article>
 
 	<aside id='sidebar'>
-		<button class="alt"> Download Guide  <i class="fa fa-file-pdf-o" aria-hidden="true"></i></button>
+        <a href="/guide/" target="_blank">
+		    <button class="alt"> Download Guide  <i class="fa fa-file-pdf-o" aria-hidden="true"></i></button>
+        </a>
 		<div></div>
-		<button id="access"> Access to application  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
+        <a href="/projects/">
+		    <button id="access"> Access to application  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
+        </a>
         <div></div>
         <br/>
         <!-- Bookmarks bar -->

@@ -1,18 +1,27 @@
 import numpy as np
+import pandas as pd
+
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+
 from django.http import Http404
 from django.http import HttpResponse
+from django.http import FileResponse
+
 from django.shortcuts import render
 from django.utils.datastructures import MultiValueDictKeyError
-import collections
+
+import os
+import io
+import json
 import urllib
 import urllib2
-import json
-import pandas as pd
-import io
 import requests
+import collections
+
+from django_pandas.io import read_frame
 
 from OpenDataTool.models import Project, Organisation
+from OpenDataTool.settings import STATIC_ROOT
 
 
 def home(request):
@@ -116,6 +125,22 @@ def search(request):
                   {'query': q, 'result': result, 'pages': pages, 'pagination': pagination, 'rows': r, 'tags': tag_result})
 
 
+def about(request):
+    return render(request, 'about.html')
+
+
+def guide(request):
+    path = os.path.join(STATIC_ROOT, 'data', 'OpenDataToolGuideline.pdf')
+    if not os.path.exists(path):
+        raise Http404()
+    else:
+        return FileResponse(open(path, 'rb'), content_type='application/pdf')
+
+
+def related(request):
+    return render(request, 'related.html')
+
+
 def projects(request):
     bookmarks = []
     if 'bookmarks' in request.session:
@@ -135,9 +160,11 @@ def projects(request):
         fp7 = request.GET['fp7']
 
     frameworks.append('h2020')
-    h2020projects = pd.read_table('C:\Users\Ryan Faulkner\Documents\Online S3\Applications\OpenDataTool\static\data\cordis-h2020projects.csv', quotechar='"', sep=';')
+
+    h2020projects = Project.objects.all().to_dataframe()
     project_frames.append(h2020projects)
-    h2020organisations = pd.read_table('C:\Users\Ryan Faulkner\Documents\Online S3\Applications\OpenDataTool\static\data\cordis-h2020organizations.csv', quotechar='"', sep=';')
+
+    h2020organisations = Organisation.objects.all().to_dataframe()
     organisation_frames.append(h2020organisations)
 
     if fp7 == 'on':
@@ -291,28 +318,56 @@ def bookmarked(request):
     return HttpResponse('Error')
 
 
-def update(request):
-    # # Projects
-    # # Read current version
-    # existing_projects_df = pd.DataFrame(list(Project.objects.all().values()))
-    # # Read published
-    # response = urllib2.urlopen('http://cordis.europa.eu/data/cordis-h2020projects.csv')
-    # new_projects_df = pd.read_table(response, quotechar='"', sep=';')
-    # new_projects_df.columns.values[0] = 'rcn'
-    # new_projects_df['id'] = new_projects_df['id'].astype(str)
-    #
-    # updates_projects_df = existing_projects_df.merge(new_projects_df, on='id', how='outer', suffixes=['_1', '_2'])
-    #
-    # status_update = (updates_projects_df.status_1 != updates_projects_df.status_2)
-    # extended = (updates_projects_df.endDate_1 != updates_projects_df.endDate_2)
-    # to_update = status_update | extended
-    #
-    # for i, r in updates_projects_df[to_update].iterrows():
-    #     project = Project.objects.get(pk=r['id'])
-    #     project.status = r['status_2']
-    #     project.endDate = r['endDate_2']
-    #     project.save()
+def update_projects(request):
+    # Projects
+    # Read current version
+    p_qs = Project.objects.all()
+    existing_projects_df = p_qs.to_dataframe()
 
+    # Read published
+    response = urllib2.urlopen('http://cordis.europa.eu/data/cordis-h2020projects.csv')
+    new_projects_df = pd.read_table(response, quotechar='"', sep=';')
+    new_projects_df['id'] = new_projects_df['id'].astype(str)
+
+    updates_projects_df = existing_projects_df.merge(new_projects_df, on='id', how='outer', suffixes=['_1', '_2'])
+
+    status_update = (updates_projects_df.status_1 != updates_projects_df.status_2)
+    extended = (updates_projects_df.endDate_1 != updates_projects_df.endDate_2)
+    to_update = status_update | extended
+
+    for i, r in updates_projects_df[to_update].iterrows():
+        if Project.objects.filter(id=r['id']).count() > 0:
+            project = Project.objects.get(pk=r['id'])
+            project.status = r['status_2']
+            project.endDate = r['endDate_2']
+        else:
+            project = Project()
+            project.id = r['id']
+            project.acronym = r['acronym_2']
+            project.status = r['status_2']
+            project.programme = r['programme_2']
+            project.topics = r['topics_2']
+            project.frameworkProgramme = r['frameworkProgramme_2']
+            project.title = r['title_2']
+            project.startDate = r['startDate_2']
+            project.endDate = r['endDate_2']
+            project.projectUrl = r['projectUrl_2']
+            project.objective = r['objective_2']
+            project.totalCost = r['totalCost_2']
+            project.ecMaxContribution = r['ecMaxContribution_2']
+            project.call = r['call_2']
+            project.fundingScheme = r['fundingScheme_2']
+            project.coordinator = r['coordinator_2']
+            project.coordinatorCountry = r['coordinatorCountry_2']
+            project.participants = r['participants_2']
+            project.participantCountries = r['participantCountries_2']
+            project.subjects = r['subjects_2']
+        project.save()
+
+    return HttpResponse('OK')
+
+
+def update_organisations(request):
     # Organisations
     # Read current version
     existing_organisations_df = pd.DataFrame(list(Organisation.objects.all().values()))
@@ -321,28 +376,30 @@ def update(request):
     response = urllib2.urlopen('http://cordis.europa.eu/data/cordis-h2020organizations.csv')
     new_organisations_df = pd.read_table(response, quotechar='"', sep=';')
     new_organisations_df['id'] = new_organisations_df['id'].astype(str)
+    new_organisations_df['projectID'] = new_organisations_df['projectID'].astype(str)
 
-    updates_organisations_df = existing_organisations_df.merge(new_organisations_df, on=['id', 'projectAcronym'], how='outer', suffixes=['_1', '_2'])
+    updates_organisations_df = existing_organisations_df.merge(right=new_organisations_df, left_on=['projectID', 'organizationID'], right_on=['projectID', 'id'], how='outer', suffixes=['_1', '_2'])
+
+    # pd.set_option('display.max_columns', None)
+    # print updates_organisations_df.head(1)
 
     participation_ended = (updates_organisations_df.endOfParticipation_1 != updates_organisations_df.endOfParticipation_2)
-    # role_change = (updates_organisations_df.role_1 != updates_organisations_df.role_2)
-    to_update = participation_ended  # | role_change
+    role_change = (updates_organisations_df.role_1 != updates_organisations_df.role_2)
+    to_update = participation_ended | role_change
 
     for i, r in updates_organisations_df[to_update].iterrows():
-        if Organisation.objects.filter(id=r['id'], projectAcronym=r['projectAcronym']).count() > 0:
-            print 'UPDATE'
-            organisation = Organisation.objects.get(pk=r['id'])
+        if Organisation.objects.filter(organizationID=r['organizationID'], projectID=r['projectID']).count() == 1:
+            print "UPDATING ->" + r['projectAcronym_1']
+            organisation = Organisation.objects.get(organizationID=r['organizationID'], projectID=r['projectID'])
             organisation.role = r['role_2']
             organisation.endOfParticipation = r['endOfParticipation_2']
         else:
-            print 'INSERT: ' + r['shortName_2'] + ', ' + r['projectAcronym']
+            print "INSERTING ->" + r['projectAcronym_2']
             organisation = Organisation()
-            organisation.projectRcn = r['\xef\xbb\xbfprojectRcn']
-            organisation.projectId = r['projectID']
-            organisation.projectID_id = r['projectID']
-            organisation.projectAcronym = r['projectAcronym']
+            organisation.projectID = r['projectID']
+            organisation.projectAcronym = r['projectAcronym_2']
             organisation.role = r['role_2']
-            organisation.id = r['id']
+            organisation.organizationID = r['id_2']
             organisation.name = r['name_2']
             organisation.shortName = r['shortName_2']
             organisation.activityType = r['activityType_2']
@@ -367,12 +424,14 @@ def update(request):
 
 
 def initialise(request):
+    Project.objects.all().delete()
+
     # H2020 Projects
     response = urllib2.urlopen('http://cordis.europa.eu/data/cordis-h2020projects.csv')
     p_df = pd.read_table(response, quotechar='"', sep=';')
     for i, r in p_df.iterrows():
+        print r['acronym']
         project = Project()
-        project.rcn = r['\xef\xbb\xbfrcn']
         project.id = r['id']
         project.acronym = r['acronym']
         project.status = r['status']
@@ -395,36 +454,89 @@ def initialise(request):
         project.subjects = r['subjects']
         project.save()
 
+    Organisation.objects.all().delete()
+
     # H2020 Organisations
     response = urllib2.urlopen('http://cordis.europa.eu/data/cordis-h2020organizations.csv')
     o_df = pd.read_table(response, quotechar='"', sep=';')
+    o_df = o_df[np.isfinite(o_df['id'])]
     o_df = o_df[np.isfinite(o_df['projectID'])]
-    for i, r in o_df.iterrows():
-        organisation = Organisation()
-        organisation.projectRcn = r['\xef\xbb\xbfprojectRcn']
-        organisation.projectId = r['projectID']
-        organisation.projectID_id = r['projectID']
-        organisation.projectAcronym = r['projectAcronym']
-        organisation.role = r['role']
-        organisation.id = r['id']
-        organisation.name = r['name']
-        organisation.shortName = r['shortName']
-        organisation.activityType = r['activityType']
-        organisation.endOfParticipation = r['endOfParticipation']
-        organisation.ecContribution = r['ecContribution']
-        organisation.country = r['country']
-        organisation.street = r['street']
-        organisation.city = r['city']
-        organisation.postCode = r['postCode']
-        organisation.organizationUrl = r['organizationUrl']
-        organisation.contactType = r['contactType']
-        organisation.contactTitle = r['contactTitle']
-        organisation.contactFirstNames = r['contactFirstNames']
-        organisation.contactLastNames = r['contactLastNames']
-        organisation.contactFunction = r['contactFunction']
-        organisation.contactTelephoneNumber = r['contactTelephoneNumber']
-        organisation.contactFaxNumber = r['contactFaxNumber']
-        organisation.contactEmail = r['contactEmail']
-        organisation.save()
+
+    o_df_records = o_df.to_dict('records')
+
+    model_instances = [Organisation(
+        projectID=r['projectID'],
+        projectAcronym=r['projectAcronym'],
+        role=r['role'],
+        organizationID=r['id'],
+        name=r['name'],
+        shortName=r['shortName'],
+        activityType=r['activityType'],
+        endOfParticipation=r['endOfParticipation'],
+        ecContribution=r['ecContribution'],
+        country=r['country'],
+        street=r['street'],
+        city=r['city'],
+        postCode=r['postCode'],
+        organizationUrl=r['organizationUrl'],
+        contactType=r['contactType'],
+        contactTitle=r['contactTitle'],
+        contactFirstNames=r['contactFirstNames'],
+        contactLastNames=r['contactLastNames'],
+        contactFunction=r['contactFunction'],
+        contactTelephoneNumber=r['contactTelephoneNumber'],
+        contactFaxNumber=r['contactFaxNumber'],
+        contactEmail=r['contactEmail'],
+    ) for r in o_df_records]
+
+    Organisation.objects.bulk_create(model_instances)
 
     return HttpResponse('OK')
+
+
+def notifications(request):
+    notifications = []
+
+    response = urllib2.urlopen('http://cordis.europa.eu/data/cordis-h2020projects.csv')
+    updates = pd.read_table(response, quotechar='"', sep=';', dtype='str')
+    updates.drop(updates.columns[0], axis=1, inplace=True)
+
+    bookmarks = []
+    if 'bookmarks' in request.session:
+        bookmarks = request.session['bookmarks']
+
+    for bookmark in bookmarks:
+        project = Project.objects.get(pk=bookmark)
+
+        df1 = read_frame(Project.objects.filter(id=bookmark))
+        df1 = df1.iloc[0]
+        df2 = updates[updates['id'] == bookmark].squeeze()
+
+        if df1['status'] != df2['status']:
+            notifications.append({"id": bookmark, "acronym": df1['acronym'], "message": "Status Update", "old": df1['status'], "new": df2['status']})
+            project.status = df2['status']
+
+        if df1['endDate'] != df2['endDate']:
+            notifications.append({"id": bookmark, "acronym": df1['acronym'], "message": "Project Extended", "old": df1['endDate'], "new": df2['endDate']})
+            project.endDate = df2['endDate']
+
+        if df1['totalCost'] != df2['totalCost']:
+            notifications.append({"id": bookmark, "acronym": df1['acronym'], "message": "Budget Update", "old": df1['totalCost'], "new": df2['totalCost']})
+            project.totalCost = df2['totalCost']
+
+        project.save()
+
+        print notifications
+
+        # print df1['acronym'] == df2['acronym']
+        # print df1['title'] == df2['title']
+        # print df1['objective'] == df2['objective']
+        # print df1['projectUrl'] == df2['projectUrl']
+        # print df1['totalCost'] == df2['totalCost']
+        # print df1['ecMaxContribution'] == df2['ecMaxContribution']
+        # print df1['coordinator'] == df2['coordinator']
+        # print df1['participants'] == df2['participants']
+        # print df1['subjects'] == df2['subjects']
+
+    return render(request, 'notifications.html', {'notifications': notifications})
+

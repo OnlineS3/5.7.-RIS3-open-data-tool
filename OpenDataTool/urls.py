@@ -18,12 +18,22 @@ from django.contrib import admin
 from OpenDataTool.views import *
 
 urlpatterns = [
+    # Development
     url(r'^admin/', admin.site.urls),
+
+    # Legacy
     url(r'^home/$', home),
     url(r'^results/$', search),
     url(r'^resource/$', resource),
+
+    # Application
+    url(r'^about/$', about),
+    url(r'^guide/$', guide),
+    url(r'^related/$', related),
     url(r'^projects/$', projects),
+    # url(r'^init/$', initialise),
+    url(r'^updateProjects/$', update_projects),
+    url(r'^updateOrganisations/$', update_organisations),
     url(r'^bookmarked/$', bookmarked, name='bookmarked'),
-    url(r'^update/$', update),
-    url(r'^init/$', initialise),
+    url(r'^notifications/$', notifications, name='notifications'),
 ]
