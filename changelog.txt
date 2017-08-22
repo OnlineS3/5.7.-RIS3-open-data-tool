@@ -1,0 +1,7 @@
+5.7.-RIS3-open-data-tool
+Change Log
+
+Bug Fixes and Features
+- Fix bookmark persistence
+- Removed confusing nan's
+- Search by full country name

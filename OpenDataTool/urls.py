@@ -1,39 +1,38 @@
-"""OnlineDataTool URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/1.10/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  url(r'^$', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  url(r'^$', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.conf.urls import url, include
-    2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
+"""Open Data Tool URL Configuration
+The `urlpatterns` list routes URLs to views.
 """
-from django.conf.urls import url
+from django.conf.urls import url, include
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
+
 from OpenDataTool.views import *
 
 urlpatterns = [
     # Development
     url(r'^admin/', admin.site.urls),
+    url(r'^signup/$', signup, name='signup'),
+    url(r'^login/$', auth_views.login, name='login'),
+    url(r'^logout/$', auth_views.logout, {'next_page': '/about'}, name='logout'),
 
-    # Legacy
-    url(r'^home/$', home),
-    url(r'^results/$', search),
-    url(r'^resource/$', resource),
+    url(r'^select2/', include('django_select2.urls')),
 
     # Application
-    url(r'^about/$', about),
-    url(r'^guide/$', guide),
-    url(r'^related/$', related),
-    url(r'^projects/$', projects),
-    # url(r'^init/$', initialise),
-    url(r'^updateProjects/$', update_projects),
-    url(r'^updateOrganisations/$', update_organisations),
+    url(r'^about/$', about, name='about'),
+    url(r'^guide/$', guidepage, name='guide'),
+    url(r'^pdf/$', guide, name='pdf'),
+    url(r'^related/$', related, name='related'),
+
+    url(r'^search/$', search, name='search'),
+    url(r'^results/$', results, name='results'),
+    url(r'^projects/$', projects, name='projects'),
+    url(r'^explorer/$', explorer, name='explorer'),
+
+    url(r'^query/$', query, name='query'),
     url(r'^bookmarked/$', bookmarked, name='bookmarked'),
-    url(r'^notifications/$', notifications, name='notifications'),
+
+    # url(r'^init/$', init, name="init"),
+    # url(r'^annotate/$', annotate, name="annotate"),
+
+    # Base URL
+    url(r'^$', about),
 ]

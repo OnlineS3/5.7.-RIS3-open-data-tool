@@ -1,0 +1,19 @@
+{% load static %}
+{% load custom %}
+
+{% for organisation in organisations %}
+    <div class="panel panel-default">
+        <div class="panel-body media">
+            <div class="media-left">
+                <img src="{%  static "img/H2020.png" %}" alt="H2020" height="52px" width="52px"/>
+            </div>
+            <div class="media-body">
+                <h4 class="media-heading">[ORGANISATION] <strong>{{ organisation.shortName }}</strong> - {{ organisation.name }}</h4>
+                <strong>ID: </strong>{{ organisation.id }}<br/>
+                <strong>Website: </strong>{% if not organisation.organizationUrl|is_nan %}<a href="http://{{ organisation.organizationUrl }}">{{ organisation.organizationUrl }} <span class="fa fa-external-link"/></a>{% else %}N/A{% endif %}<br/>
+                <strong>Activity Type: </strong>{{ organisation.activityType }}<br/>
+                <strong>Address: </strong>{{ organisation.street }}, {{ organisation.city }}, {{ organisation.postCode }}, {{ organisation.country }}<br/>
+            </div>
+        </div>
+    </div>
+{% endfor %}

@@ -28,23 +28,6 @@ def is_nan(value):
         return math.isnan(float(value))
 
 
-@register.filter(name='zip')
-def zip_lists(a, b):
-    a = a.split(';')
-    b = b.split(';')
-    if len(a) != len(b):
-        b = ['']*len(a)
-    return zip(a, b)
-
-
-@register.filter(name='parse_id')
-def parse_id(bookmarks, b_id):
-    bookmark_k = ' '.join(map(str, bookmarks.keys()))
-    if str(b_id) in bookmark_k:
-        return True
-    return False
-
-
 @register.simple_tag(takes_context=True)
 def url_replace(context, **kwargs):
     query = context['request'].GET.copy()
@@ -58,6 +41,19 @@ def url_replace(context, **kwargs):
     return mark_safe(query.urlencode())
 
 
-@register.filter(name='extract_programme')
-def extract_programme(value):
-    return value.split('-')[0].lower()
+@register.filter(name='in_region')
+def in_region(organisations, region_id):
+    return organisations.filter(regionCode_id=region_id)
+
+
+@register.filter(name='divide')
+def divide(value, arg):
+    try:
+        return int(value)/float(arg)
+    except (ValueError, ZeroDivisionError):
+        return None
+
+
+@register.filter(name='multiply')
+def multiply(value, arg):
+    return value*arg

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load static %}
+{% load mathfilters %}
+
+{% block addHead %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+    <style>
+    .pagetitle {
+        margin: 0;
+        color: #de1515;
+        padding: 1rem 0 0rem 1rem;
+        font-style: normal;
+        font-weight: 400;
+        clear: both;
+        font-size: 21px;
+        font-family: tahoma
+    }
+    </style>
+{% endblock %}
+
+<!-- Application's space -->
+{% block content %}
+<div class="site-content">
+
+	<article id="main-content">
+
+		<h2 class="pagetitle">Data Explorer</h2>
+
+        {% for k, result in results.iteritems %}
+            <h4>{{ k }}</h4>
+
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#{{ forloop.counter }}_tbl" data-toggle="tab">Table</a></li>
+                <li><a href="#{{ forloop.counter }}_gph" data-toggle="tab">Graph</a></li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane active" id="{{ forloop.counter }}_tbl">
+                    <table class="table table-condensed table-hover">
+                        <tr>
+                            <th>Region/Industry</th>
+                            <th># Project(s)</th>
+                            <th># Organisation(s)</th>
+                            <th>%</th>
+                        </tr>
+                        {% for i in result %}
+                            <tr>
+                                <td>{{ i.name }}</td>
+                                <td>
+                                    <a data-toggle="modal" data-target="#{{ forloop.counter }}_prj">
+                                        {{ i.projects|length }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a data-toggle="modal" data-target="#{{ forloop.counter }}_org">
+                                        {{ i.count }}
+                                    </a>
+                                </td>
+                                <td>{{ i.p|mul:100|floatformat:1 }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+
+                    <a id="btnExport" style="float: right">Export <i class="fa fa-file-excel-o"></i></a>
+
+                    <script type="application/javascript">
+                        $(document).ready(function() {
+                          $("#btnExport").click(function(e) {
+                            e.preventDefault();
+
+                            //getting data from our table
+                            var data_type = 'data:application/vnd.ms-excel';
+                            var table_div = document.getElementById('{{ forloop.counter }}_tbl');
+                            var table_html = table_div.outerHTML.replace(/ /g, '%20');
+
+                            var a = document.createElement('a');
+                            a.href = data_type + ', ' + table_html;
+                            a.download = 'summary.xls';
+                            a.click();
+                          });
+                        });
+                    </script>
+                </div>
+
+                {% for i in result %}
+                    <!-- Modal -->
+                    <div id="{{ forloop.counter }}_prj" class="modal fade" role="dialog">
+                        <div class="modal-dialog modal-lg">
+                            <!-- Modal content-->
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close"
+                                            data-dismiss="modal">&times;</button>
+                                    <h4 class="modal-title">Projects</h4>
+                                </div>
+                                <div class="modal-body">
+                                    {% include "projects.html" with projects=i.projects %}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% for i in result %}
+                    <!-- Modal -->
+                    <div id="{{ forloop.counter }}_org" class="modal fade" role="dialog">
+                        <div class="modal-dialog modal-lg">
+                            <!-- Modal content-->
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close"
+                                            data-dismiss="modal">&times;</button>
+                                    <h4 class="modal-title">Organisations</h4>
+                                </div>
+                                <div class="modal-body">
+                                    {% include "organisations.html" with organisations=i.organisations %}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="tab-pane" id="{{ forloop.counter }}_gph">
+                    <!-- Pie chart -->
+                    <div id="{{ forloop.counter }}_chart" style="width:100%; height:400px; margin:0 auto"></div>
+                    <script type="application/javascript">
+                        var dict = [];
+                        {% for i in result %}
+                            dict.push({
+                                name: "{{ i.name }}",
+                                val: {{ i.count }},
+                                y: {{ i.p }}
+                            });
+                        {% endfor %}
+                        Highcharts.chart('{{ forloop.counter }}_chart', {
+                            chart: {
+                                plotBackgroundColor: null,
+                                plotBorderWidth: null,
+                                plotShadow: false,
+                                type: 'pie'
+                            },
+                            title: {
+                                text: '{{ k }}'
+                            },
+                            tooltip: {
+                                pointFormat: '{series.name}: <br/><b>{point.val} Project(s)</b><br/><b>{point.percentage:.1f}%</b>'
+                            },
+                            plotOptions: {
+                                pie: {
+                                    allowPointSelect: true,
+                                    cursor: 'pointer',
+                                    dataLabels: {
+                                        enabled: true,
+                                        format: '<b>{point.name}</b>: <br/><b>{point.val} Project(s)</b><br/>{point.percentage:.1f} %',
+                                        style: {
+                                            color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                                        }
+                                    }
+                                }
+                            },
+                            series: [{
+                                name: 'Share',
+                                colorByPoint: true,
+                                data: dict
+                            }]
+                        });
+                    </script>
+                    <!-- -->
+                </div>
+            </div>
+        {% endfor %}
+        <button type="submit" class="button btn-primary" onclick="location.href='{% url 'search' %}'"><span class="fa fa-search"></span><br/>New Search</button>
+
+	</article>
+
+	<aside id='sidebar'>
+        <a href="{% url 'pdf' %}" target="_blank">
+		    <button class="alt"> Download Guide  <i class="fa fa-file-pdf-o" aria-hidden="true"></i></button>
+        </a>
+		<div></div>
+        <a href="{% url 'search' %}">
+		    <button> Access to application  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
+        </a>
+	</aside>
+
+</div>
+<!-- Application's space -->
+{% endblock %}

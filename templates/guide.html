@@ -1,162 +1,359 @@
-<!doctype html>
-<html class="no-js" lang="en">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
-	<meta charset="utf-8"/>
-	<meta http-equiv="x-ua-compatible" content="ie=edge"/>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-	<title>Open Data Tool Application</title>
-    {% load static %}
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
-	<link rel="stylesheet" href="{% static "css/layout.css" %}"/>
-	<link rel="stylesheet" href="{% static "css/header.css" %}"/>
-	<link rel="stylesheet" href="{% static "css/footer.css" %}"/>
-</head>
+{% block addHead %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-<body>
-
-<div id="page">
-
-<div id="mainpage" class="site">
-
-<!-- site header -->
-<header id='site-header'>
-
-	<nav id='top-menu'>
-		<ul>
-			<li><a href='http://www.onlines3.eu/'>Online S3 Project</a></li>
-			<li class="active"><a href='#'><i class="fa fa-lightbulb-o" aria-hidden="true"></i>Applications</a></li>
-			<li><a href='#'><i class="fa fa-cog" aria-hidden="true"></i>Toolbox</a></li>
-			<li><a href='#'><i class="fa fa-bar-chart" aria-hidden="true"></i>Analytics</a></li>
-			<li><a href='#'><i class="fa fa-life-ring" aria-hidden="true"></i></i>Support</a></li>
-			<li><a href='#'><i class="fa fa-envelope-o" aria-hidden="true"></i>Contact</a></li>
-		</ul>
-	</nav>
-
-	<div id='header-main'>
-
-		<div class='top-section'>
-			<div class='headers'>
-				<img class='logo-img' src="{% static 'img/logo.png' %}" width='77'>
-				<div>
-					<p class="heading"><a href='#'>Online S3 Platform</a></p>
-					<p class="sub-heading">RIS3 Open Data Tool</p>
-				</div>
-			</div>
-
-			<div class="social-links">
-				<a href="https://twitter.com/online_s3" title="Twitter" target="_blank"><i class="fa fa-twitter-square" aria-hidden="true"></i></a>
-				<a href="https://plus.google.com/102042915278982824881" title="Google+" target="_blank"><i class="fa fa-google-plus-square" aria-hidden="true"></i></a>
-				<a href="https://www.youtube.com/channel/UCuYNnd9rdrN_EbF5_P0Nmog" title="YouTube" target="_blank"><i class="fa fa-youtube-square" aria-hidden="true"></i></a>
-				<!-- <a href="https://twitter.com/online_s3" title="Twitter" target="_blank">L</a>  -->
-				<!-- <a href="https://plus.google.com/102042915278982824881" title="Google+" target="_blank">G</a>  -->
-				<!-- <a href="https://www.youtube.com/channel/UCuYNnd9rdrN_EbF5_P0Nmog" title="YouTube" target="_blank">X</a>  -->
-				<!-- <a href="http://www.onlines3.eu/feed/" title="Newsfeed" target="_blank">R</a> -->
-			</div>
-		</div>
-
-		<div class='bottom-section'>
-			<div class="menu">
-				<ul>
-					<li><a href="/about/">About</a></li>
-					<li><a href="/guide/">Guide</a></li>
-					<li><a href="/related/">Related Documents</a></li>
-					<li><a id='tool' href='/projects/'>Access to application</a></li>
-				</ul>
-			</div>
-
-			<div class='user-btns'>
-				<button class='login-btn'> Sign in </button>
-				<button class='register-btn'> Sign up </button>
-			</div>
-		</div>
-
-	</div>
-
-	<div id='breadcrumb'>
-		<ul>
-			<li><a href='http://www.s3platform.eu/'>Online S3 Platform</a></li>
-			<li><a href='http://www.s3platform.eu/applications/5-policy-mix/'>Policy Mix</a></li>
-			<li><span>RIS3 Open Data Tool</span></li>
-		</ul>
-	</div>
-
-</header>
-<!-- site header -->
+    <style>
+    .carousel .carousel-control {
+        visibility: hidden;
+    }
+    .carousel:hover .carousel-control {
+        visibility: visible;
+    }
+    .carousel-indicators li{
+        border-color: #2a6496;
+    }
+    .carousel-indicators .active {
+        background-color: #2a6496;
+    }
+    .carousel-control{
+        color: #2a6496;
+    }
+    .carousel-control.left, .carousel-control.right {
+        background-image: none;
+    }
+    .pagetitle {
+        margin: 0;
+        color: #de1515;
+        padding: 1rem 0 0rem 0rem;
+        font-style: normal;
+        font-weight: 400;
+        clear: both;
+        font-size: 21px;
+        font-family: tahoma
+    }
+    </style>
+{% endblock %}
 
 <!-- Application's space -->
+{% block content %}
 <div class="site-content">
 
 	<article id="main-content">
 
-		<h2>Guide</h2>
-		<p>
-            <strong>Step 1: </strong>Define a search term concerning one of the following properties of the projects in interest:
-            <ul>
-                <li>Project Title, Acronym, ID, Objective</li>
-                <li>Coordinator, Country of Origin</li>
-                <li>Call, Programme, Funding Scheme</li>
-            </ul>
-            <br/>
-
-            <strong>Step 2: </strong>Select frameworks, filters and sorting parameters to refine the search further to narrow down on projects of interest.
-            <br/>
-
-            <strong>Step 3: </strong>Explore the search results concerning projects and participating organisations.
-            <br/>
-
-            <strong>Step 4: </strong>Select a project to get more information concerning the consortium and breakdown.
-            <br/>
-
-            <strong>Step 5: </strong>Save projects to the bookmark panel for ease-of-access at a later stage.
-            <br/>
+		<h2 class="pagetitle">Guide</h2>
+        <p>
+            Individual walkthrough for each potential use of the RIS3 Open Data Tool as a worked example.
         </p>
+
+        <div style="text-align: center">- 1 -</div>
+
+        <div id="step1_ctl" class="carousel slide" data-ride="carousel" data-interval="false">
+            <!-- Indicators -->
+            <ol class="carousel-indicators">
+                <li data-target="#step1_ctl" data-slide-to="0" class="active"></li>
+                <li data-target="#step1_ctl" data-slide-to="1"></li>
+                <li data-target="#step1_ctl" data-slide-to="2"></li>
+                <li data-target="#step1_ctl" data-slide-to="3"></li>
+                <li data-target="#step1_ctl" data-slide-to="4"></li>
+            </ol>
+
+            <div class="carousel-inner">
+                <div class="item active">
+                    <p style="text-align: justify">
+                        <strong>Step 1: </strong>Define a search term concerning one of the following properties of the projects in interest
+                        and select filters to refine the search further to narrow down on projects of interest implemented in a particular region:
+                        <ul style="list-style-type: disc; text-align: left">
+                            <li><strong>Key Term</strong>: A topic of interest e.g. RIS3</li>
+                            <li><strong>Industry</strong>: A classification of project Business Area</li>
+                            <li><strong>Region</strong>:   Area of implementation</li>
+                        </ul>
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step1.png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 1 (a)"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 1: Defining a search term and applying optional filters.
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 2: </strong> Explore the search results concerning projects and participating organisations grouped by region. Analyse the in-depth results and make comparisons between regions and rankings.
+                        <br/>
+                        <strong>a: </strong>Analyse the result in the form of a Project Heatmap/Gantt chart displaying the timespan and distribution
+                        of projects implemented across regions. More dense lines represent a higher concentration of projects funded in a particular region.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step2a.png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 2 (a)"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 2 (a): Project Heatmap Analysis.
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 2: </strong> Explore the search results concerning projects and participating organisations grouped by region. Analyse the in-depth results and make comparisons between regions and rankings.
+                        <br/>
+                        <strong>b: </strong>Get an in-depth breakdown of the projects implemented in each region.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step2a(2).png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 2 (b)"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 2 (b): Results grouped by Region.
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 2: </strong> Explore the search results concerning projects and participating organisations grouped by region. Analyse the in-depth results and make comparisons between regions and rankings.
+                        <br/>
+                        <strong>c: </strong>Visualise the geographical spread of the organisations implementing these projects.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step2a(3).png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 2 (c)"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 2 (c): Explore the map of organisations
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 3: </strong> Export chart, tables and figures
+                        <br/>
+                        <strong>a: </strong> Download charts as an image.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step3.png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 3"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 3: Export Chart to embed within a report or to share online.
+                    </p>
+                    <br/>
+                </div>
+
+                <br/>
+
+                <!-- Left and right controls -->
+                <a class="left carousel-control" href="#step1_ctl" data-slide="prev">
+                    <span class="glyphicon glyphicon-chevron-left"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="right carousel-control" href="#step1_ctl" data-slide="next">
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+        </div>
+
+        <hr/>
+
+        <div style="text-align: center">- 2 -</div>
+
+        <div id="step2_ctl" class="carousel slide" data-ride="carousel" data-interval="false">
+            <!-- Indicators -->
+            <ol class="carousel-indicators">
+                <li data-target="#step2_ctl" data-slide-to="0" class="active"></li>
+                <li data-target="#step2_ctl" data-slide-to="1"></li>
+                <li data-target="#step2_ctl" data-slide-to="2"></li>
+                <li data-target="#step2_ctl" data-slide-to="3"></li>
+            </ol>
+
+            <div class="carousel-inner">
+                <div class="item active">
+                    <p style="text-align: justify">
+                        <strong>Step 1: </strong>Find leading business areas or industries within specified regions. Simply specify regions of interest.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step1b.png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 1"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 1: Selecting a region of interest.
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 2: </strong> Explore the search results concerning leading industries within the specified region.
+                        <br/>
+                        <strong>a: </strong> View the results as a table showing the distribution of projects across various business areas.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step2b.png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 2(a)"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 2(a): Results table breakdown.
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 2: </strong> Explore the search results concerning leading industries within the specified region.
+                        <br/>
+                        <strong>a (2): </strong>Get an in-depth breakdown of the projects implemented in each region and relevant organisations involved in these projects.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step2b(2.1).png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 2(a)(2)"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 2 (a)(2): Find out more about individual projects.
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 2: </strong> Explore the search results concerning leading industries within the specified region.
+                        <br/>
+                        <strong>b: </strong> View the results as a pie chart showing the distribution of projects across various business areas.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step2b(2).png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 2 (b)"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 2 (b): Results chart breakdown.
+                    </p>
+                    <br/>
+                </div>
+
+                <br/>
+
+                <!-- Left and right controls -->
+                <a class="left carousel-control" href="#step2_ctl" data-slide="prev">
+                    <span class="glyphicon glyphicon-chevron-left"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="right carousel-control" href="#step2_ctl" data-slide="next">
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+        </div>
+
+        <hr/>
+
+        <div style="text-align: center">- 3 -</div>
+
+        <div id="step3_ctl" class="carousel slide" data-ride="carousel" data-interval="false">
+            <!-- Indicators -->
+            <ol class="carousel-indicators">
+                <li data-target="#step3_ctl" data-slide-to="0" class="active"></li>
+                <li data-target="#step3_ctl" data-slide-to="1"></li>
+                <li data-target="#step3_ctl" data-slide-to="2"></li>
+                <li data-target="#step3_ctl" data-slide-to="3"></li>
+            </ol>
+
+            <div class="carousel-inner">
+                <div class="item active">
+                    <p style="text-align: justify">
+                        <strong>Step 1: </strong>Find leading regions concerning specific Business Areas. Simply specify Business Areas of interest.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step1c.png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 1"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 1: Selecting a Business Area/Industry of interest.
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 2: </strong> Explore the results concerning leading regions within a particular Business Area.
+                        <br/>
+                        <strong>a: </strong> View the results as a table showing the relationship between regions and this Business Area.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step2b.png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 2(a)"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 2(a): Results table breakdown.
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 2: </strong> Explore the search results concerning leading industries within the specified region.
+                        <br/>
+                        <strong>a (2): </strong>Get an in-depth breakdown of the projects implemented in each region and relevant organisations involved in these projects.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step2b(2.2).png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 2(a)(2)"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 2 (a)(2): Find out more about individual projects and organisations.
+                    </p>
+                    <br/>
+                </div>
+
+                <div class="item">
+                    <p style="text-align: justify">
+                        <strong>Step 3: </strong> Explore the search results concerning leading industries within the specified region.
+                        <br/>
+                        View the results as a pie chart showing the distribution of projects across various business areas and save the graph as an image or document.
+                    </p>
+                    <div class="img-container">
+                        <img src="{% static "img/odt_step3c.png" %}" style="width: 620px; display: block; margin: 0 auto" alt="Step 3"/>
+                    </div>
+                    <br/>
+                    <p class="img-caption">
+                        Step 3: Results chart breakdown.
+                    </p>
+                    <br/>
+                </div>
+
+                <br/>
+
+                <!-- Left and right controls -->
+                <a class="left carousel-control" href="#step3_ctl" data-slide="prev">
+                    <span class="glyphicon glyphicon-chevron-left"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="right carousel-control" href="#step3_ctl" data-slide="next">
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+        </div>
+
 
 	</article>
 
 	<aside id='sidebar'>
-        <a href="/guide/" target="_blank">
+        <a href="{% url 'pdf' %}" target="_blank">
 		    <button class="alt"> Download Guide  <i class="fa fa-file-pdf-o" aria-hidden="true"></i></button>
         </a>
 		<div></div>
-        <a href="/projects/">
+        <a href="{% url 'search' %}">
 		    <button> Access to application  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
         </a>
 	</aside>
 
 </div>
 <!-- Application's space -->
-
-<!-- site footer -->
-<footer id='site-footer'>
-
-	<div id="footer-links">
-        <ul>
-            <li><a href="#"><span>Online S3 Project</span></a></li>
-            <li class="active"><a href="#"><span>Applications</span></a></li>
-            <li><a href="#"><span>Toolbox</span></a></li>
-            <li><a href="#"><span>Analytics</span></a></li>
-            <li><a href="#"><span>Support</span></a></li>
-            <li><a href="#"><span>Contact</span></a></li>
-        </ul>
-        <div id='copyright'>
-            <img src="{% static 'img/logo.png' %}" width="30" alt="online logo">
-            <p>Copyright &copy; 2016-2017 OnlineS3 Project</p>
-        </div>
-    </div>
-
-    <div id="european">
-        <img src="{% static 'img/eu_logo.png' %}" width="85" alt="Co-funded by the European Union">
-
-        <p>
-            Funded by the Horizon 2020 Framework Programme of the European Union.
-        </p>
-    </div>
-
-</footer>
-
-<!-- site footer -->
-
-</div>
-
-</div>
+{% endblock %}
