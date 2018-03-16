@@ -2,117 +2,11 @@
 {% load static %}
 
 {% block addHead %}
-    <link rel="stylesheet" href="{% static "css/main.css" %}"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="{% static "css/utils.css" %}"/>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
-    <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
-    <style type="text/css">
-        select {
-            width: 100%;
-        }
-        input {
-            width: 100%;
-        }
+    <link rel="stylesheet" href="{% static "css/other.css" %}"/>
+    <link rel="stylesheet" href="{% static "css/switch.css" %}"/>
 
-        #main-content {
-            width: 100%;
-        }
-
-        /* The switch - the box around the slider */
-        .switch {
-          position: relative;
-          display: inline-block;
-          width: 60px;
-          height: 34px;
-        }
-
-        /* Hide default HTML checkbox */
-        .switch input {display:none;}
-
-        /* The slider */
-        .slider {
-          position: absolute;
-          cursor: pointer;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: #ccc;
-          -webkit-transition: .4s;
-          transition: .4s;
-        }
-
-        .slider:before {
-          position: absolute;
-          content: "";
-          height: 26px;
-          width: 26px;
-          left: 4px;
-          bottom: 4px;
-          background-color: white;
-          -webkit-transition: .4s;
-          transition: .4s;
-        }
-
-        input:checked + .slider {
-          background-color: #6a788d;
-        }
-
-        input:focus + .slider {
-          box-shadow: 0 0 1px #6a788d;
-        }
-
-        input:checked + .slider:before {
-          -webkit-transform: translateX(27px);
-          -ms-transform: translateX(27px);
-          transform: translateX(27px);
-        }
-
-        /* Rounded sliders */
-        .slider.round {
-          border-radius: 34px;
-        }
-
-        .slider.round:before {
-          border-radius: 50%;
-        }
-
-        /* Tabs */
-        div.tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        /* Style the buttons inside the tab */
-        div.tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-        }
-
-        /* Change background color of buttons on hover */
-        div.tab button:hover {
-            background-color: #ddd;
-        }
-
-        /* Create an active/current tablink class */
-        div.tab button.active {
-            background-color: #ccc;
-        }
-
-        /* Style the tab content */
-        .tabcontent {
-            display: none;
-            padding: 6px 12px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-    </style>
     <script type="application/javascript">
         $(document).ready(function() {
             $('#querySwitch').click(function() {
@@ -131,13 +25,20 @@
 
         <article id="main-content">
 
-            <h2>RIS3 Open Data Tool</h2>
+            <h2 class="pagetitle">RIS3 Open Data Tool</h2>
 
             <p>
                 Search and access all of the European Commission's information on the lifecycle of projects via the
-                Community Research and Development Information Service (CORDIS): Available information includes grant
+                <abbr title="Community Research and Development Information Service">CORDIS</abbr>: Available information includes grant: Available information includes grant
                 details, funding and participants, the projects' own Report Summaries, the latest multilingual
                 Results in Brief and links to specific publications and other documents.
+            </p>
+
+            <br>
+
+            <h4 style="padding-left: 15px">Comparative Search</h4>
+            <p>
+                Compare results across regions and industries grouped by a common search term. The comparative search feature yields useful views in the form of a gantt chart displaying projects in the specified area as well as maps of the organisations implementing these projects in the specified regions.
             </p>
 
             <div class="tab">
@@ -146,7 +47,7 @@
             </div>
 
             <div id="searchtab" class="tabcontent" style="display: block">
-                <form method="POST" action="/results/">
+                <form method="POST" action="{% url 'results' %}">
                     <div class="section-content filters">
                         {% csrf_token %}
                         {% for field in form %}
@@ -160,7 +61,9 @@
                             </div>
                         {% endfor %}
                     </div>
-                    <button type="submit" class="button btn-primary">Search <span class="fa fa-search"></span></button>
+                    <br>
+                    <button type="submit" class="btn btn-primary">Search <span class="fa fa-search"></span></button>
+                    <br>
                 </form>
             </div>
 
@@ -176,8 +79,9 @@
                         <input id="querySwitch" type="checkbox">
 
                         <div class="slider round">
-                            <i class="fa fa-industry" style="color: white"></i>
+<!--                            <i class="fa fa-industry" style="color: white"></i>
                             <i class="fa fa-globe" style="color: white; padding-top: 8px;"></i>
+-->
                         </div>
 
                     </label>
@@ -186,7 +90,7 @@
 
                 <div id="regions">
                     <p>Select Region(s):</p>
-                    <form id="regions" method="POST" action="/explorer/">
+                    <form id="regions" method="POST" action="{% url 'explorer' %}">
                         <div class="section-content filters">
                             {% csrf_token %}
                             {% for field in form2 %}
@@ -200,13 +104,15 @@
                                 </div>
                             {% endfor %}
                         </div>
-                        <button type="submit" class="button btn-primary">Search <span class="fa fa-search"></span></button>
+                        <br>
+                        <button type="submit" class="btn btn-primary">Search <span class="fa fa-search"></span></button>
+                        <br>
                     </form>
                 </div>
 
                 <div id="industries" hidden>
                     <p>Select Industries:</p>
-                    <form id="industries" method="POST" action="/explorer/">
+                    <form id="industries" method="POST" action="{% url 'explorer' %}">
                         <div class="section-content filters">
                             {% csrf_token %}
                             {% for field in form3 %}
@@ -220,12 +126,22 @@
                                 </div>
                             {% endfor %}
                         </div>
-                        <button type="submit" class="button btn-primary">Search <span class="fa fa-search"></span></button>
+                        <button type="submit" class="btn btn-primary"> Search <span class="fa fa-search"></span></button>
                     </form>
                 </div>
             </div>
 
             {{ form.media.js }}
+
+            <hr>
+
+            <h5>Alternative Options:</h5>
+            <div>
+                <a class="btn btn-default" href="{% url 'map' %}"><i class="fa fa-map-marker"></i> Map Explore</a>
+                <a class="btn btn-default" href="{% url 'query' %}" style="float: right">Search <i class="fa fa-cog"></i></a>
+            </div>
+
+            <br>
 
         </article>
 
@@ -235,7 +151,7 @@
             </a>
             <div></div>
             <a href="{% url 'search' %}">
-                <button> Access to application <img src="{% static 'img/access-icon.png' %}" width="20"></button>
+                <button> Start New Search <img src="{% static 'img/access-icon.png' %}" width="20"></button>
             </a>
         </aside>
 

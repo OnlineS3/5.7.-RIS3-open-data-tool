@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block addHead %}
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Maps API -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-marker-clusterer/1.0.0/markerclusterer.js"></script>
+    <script src="http://maps.google.com/maps/api/js?key=AIzaSyDdJDbTCphVAHwZNFQGBtiC1MY4Wma7kTM&region=EU"></script>
+    <link rel="stylesheet" href="{% static "css/other.css" %}"/>
+
+    <script type="application/javascript">
+        var clusterer;
+
+        var markerImage = {
+            url: "{% static 'img/cluster/blue.png' %}",
+            labelOrigin: new google.maps.Point(15, 11)
+        };
+
+        function getData(){
+            $.ajax({
+                type: 'POST',
+                url: {% url 'mapdata' %},
+                data: {'csrfmiddlewaretoken': '{{ csrf_token }}', 'term': $('#term').val()},
+                success: function(json) {
+                    clusterer.clearMarkers();
+                    var markers = $.map(JSON.parse(json), function(data, code) {
+                        if(data.latitude && data.longitude) {
+                            var marker = new google.maps.Marker({
+                                position: new google.maps.LatLng(data.latitude, data.longitude),
+                                label: {
+                                    text: data.projects.toString() + "\n",
+                                    fontWeight: "bold",
+                                    fontSize: "10",
+                                    color: "white"
+                                },
+                                weight: data.projects,
+                                icon: markerImage
+                            });
+
+                            var url = "{% url 'query' %}?queryContext=region&query=" + code;
+                            var topic = $('#term').val();
+                            if(topic!="") url += "&topic=" + topic;
+
+                            var infowindow = new google.maps.InfoWindow({
+                               content: "<h4'>" + data.label + "</h4> <p>" + data.projects + " project(s)</p> <a href='" + url + "' target='_blank'><i class='fa fa-external-link'></i> Explore Results</a>"
+                            });
+                            google.maps.event.addListener(marker, 'click', function() {
+                                infowindow.open(map, marker);
+                            });
+                            return marker;
+                        }
+                    });
+                    clusterer.addMarkers(markers);
+                }
+            });
+        }
+
+        $(document).ready(function(){
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 3,
+                center: {lat: 51.454410, lng: -0.904908},
+                mapTypeId: google.maps.MapTypeId.TERRAIN
+            });
+
+            var mcOptions = {
+                styles: [{
+                    url: '{% static 'img/cluster/pin.png' %}',
+                    height: 48,
+                    width: 30,
+                    anchor: [-18, 0],
+                    textColor: '#ffffff',
+                    textSize: 10,
+                    iconAnchor: [15, 48]
+                }]
+            };
+
+            clusterer = new MarkerClusterer(map, [], mcOptions);
+
+            clusterer.setCalculator(function(markers, numStyles) {
+                var weight = markers.reduce(function(sum, marker){return sum + marker.weight}, 0);
+                return {
+                    text: weight,
+                    index: Math.min(String(weight).length, numStyles)
+                };
+            });
+
+            getData();
+        });
+    </script>
+{% endblock %}
+
+<!-- Application's space -->
+{% block content %}
+<div class="site-content">
+
+	<article id="main-content">
+
+        <h2>Map Explore</h2>
+        <p>
+            Search and access all of the European Commission's information on the lifecycle of projects via the
+            Community Research and Development Information Service (CORDIS): Available information includes grant
+            details, funding and participants, the projects' own Report Summaries, the latest multilingual
+            Results in Brief and links to specific publications and other documents.
+        </p>
+
+        <br>
+
+        <h4>Map Explorer</h4>
+
+        <p>
+            Explore projects by location of the parties involved.
+        </p>
+
+        <h4 style="text-align: center">Projects</h4>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="input-group input-group-lg">
+                    <input id="term" type="text" class="form-control input-lg" placeholder="Search"/>
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-default" onclick="getData()"><span class="glyphicon glyphicon-search"></span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br>
+        <p>Results:</p>
+
+        <div id="map" style="height: 400px;width: 100%"></div>
+
+        <hr>
+
+        <h5>Alternative Options:</h5>
+        <div>
+            <a class="btn btn-default" href="{% url 'search' %}" style="float: right">Comparative Search <i class="fa fa-cogs"></i></a>
+            <a class="btn btn-default" href="{% url 'query' %}" style="float: left"><i class="fa fa-cog"></i> Search</a>
+        </div>
+
+        <br><br>
+
+	</article>
+
+	<aside id='sidebar'>
+        <a href="{% url 'pdf' %}" target="_blank">
+		    <button class="alt"> Download Guide  <i class="fa fa-file-pdf-o"></i></button>
+        </a>
+		<div></div>
+        <a href="{% url 'search' %}">
+		    <button id="access"> Start a new Search  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
+        </a>
+	</aside>
+
+</div>
+<!-- Application's space -->
+{% endblock %}

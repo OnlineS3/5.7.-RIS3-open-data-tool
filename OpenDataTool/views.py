@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
-import json
 import os
+import json
+import StringIO
+import pandas as pd
 import plotly.figure_factory as ff
-from plotly.offline import plot
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Count
-from django.http import FileResponse
-from django.http import Http404
-from django.http import HttpResponse
+from django.http import FileResponse, JsonResponse, HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.utils.datastructures import MultiValueDictKeyError
-
+from plotly.offline import plot
 from OpenDataTool.models import *
 from OpenDataTool.settings import STATIC_ROOT
 from .forms import *
@@ -22,12 +21,12 @@ def about(request):
     return render(request, 'about.html')
 
 
-def guidepage(request):
+def guide(request):
     return render(request, 'guide.html')
 
 
-def guide(request):
-    path = os.path.join(STATIC_ROOT, 'data', 'OpenDataToolGuideline.pdf')
+def pdf(request):
+    path = os.path.join(STATIC_ROOT, 'OpenDataToolGuideline.pdf')
     if not os.path.exists(path):
         raise Http404()
     else:
@@ -55,8 +54,8 @@ def signup(request):
 
 def search(request):
     form = SearchForm()
-    form2 = ExplorerForm()
-    form3 = Explorer2Form()
+    form2 = ExploreRegionForm()
+    form3 = ExploreIndustryForm()
     return render(request, 'search.html', {
         'form': form, 'form2': form2, 'form3': form3
     })
@@ -67,7 +66,8 @@ def results(request):
     comparison = []
 
     region_filter = request.POST.getlist('region')
-    regions = Region.objects.filter(code__in=Organisation.objects.exclude(regionCode__code__isnull=True).values_list('regionCode').distinct()) if region_filter == [] else Region.objects.filter(code__in=region_filter)
+    regions = Region.objects.filter(code__in=Organisation.objects.exclude(regionCode__code__isnull=True).values_list(
+        'regionCode').distinct()) if region_filter == [] else Region.objects.filter(code__in=region_filter)
 
     for region in regions:
         if region.level < 3:
@@ -79,7 +79,8 @@ def results(request):
         if 'objective' in request.POST and request.POST.get('objective') != '':
             filter_kwargs['project__objective__icontains'] = request.POST.get('objective')
         if 'industry' in request.POST and request.POST.get('industry') != '':
-            filter_kwargs['project__id__in'] = ProjectIndustry.objects.filter(industry=request.POST.get('industry')).values_list("project")
+            filter_kwargs['project__id__in'] = ProjectIndustry.objects.filter(
+                industry=request.POST.get('industry')).values_list("project")
         project_organisations = ProjectOrganisation.objects.filter(**filter_kwargs).order_by('project__startDate')
 
         organisations = Organisation.objects.filter(id__in=project_organisations.values('organisation'))
@@ -96,7 +97,8 @@ def results(request):
             }
             res.append(result)
 
-    comparison_fig = ff.create_gantt(comparison, colors=['rgb(106, 120, 141)'], showgrid_x=True, group_tasks=True, title=request.POST.get('objective'))
+    comparison_fig = ff.create_gantt(comparison, colors=['rgb(106, 120, 141)'], showgrid_x=True, group_tasks=True,
+                                     title=request.POST.get('objective'))
     comparison_graph = plot(comparison_fig, include_plotlyjs=True, output_type='div', show_link=False)
 
     return render(request, 'results.html', {'results': res, 'comparison': comparison_graph})
@@ -108,12 +110,15 @@ def explorer(request):
         region_codes = request.POST.getlist('region')
 
         for region in region_codes:
-            industries = ProjectOrganisation.objects.filter(organisation__regionCode=region, project__projectindustry__industry__isnull=False).values('project__projectindustry__industry').annotate(Count('id'))
+            industries = ProjectOrganisation.objects.filter(organisation__regionCode=region,
+                                                            project__projectindustry__industry__isnull=False).values(
+                'project__projectindustry__industry').annotate(Count('id'))
             results = []
             total = 0
             for industry in industries:
                 ind = Industry.objects.get(id=industry['project__projectindustry__industry'])
-                ids = ProjectOrganisation.objects.filter(organisation__regionCode=region, project__projectindustry__industry=ind.id)
+                ids = ProjectOrganisation.objects.filter(organisation__regionCode=region,
+                                                         project__projectindustry__industry=ind.id)
                 res = {'name': ind.name,
                        'count': industry['id__count'],
                        'organisations': Organisation.objects.filter(id__in=ids.values_list('organisation')),
@@ -123,9 +128,11 @@ def explorer(request):
                 results.append(res)
 
             for res in results:
-                res['p'] = res['count']/float(total)
+                res['p'] = res['count'] / float(total)
 
-            regions[Region.objects.get(code=region).nutsCode] = sorted(results, key=lambda k: (len(k['projects']), k['count']), reverse=True)
+            regions[Region.objects.get(code=region).nutsCode] = sorted(results,
+                                                                       key=lambda k: (len(k['projects']), k['count']),
+                                                                       reverse=True)
 
         return render(request, 'explorer.html', {'results': regions})
 
@@ -134,12 +141,15 @@ def explorer(request):
         industry_codes = request.POST.getlist('industries')
 
         for industry in industry_codes:
-            regions = ProjectOrganisation.objects.filter(project__projectindustry__industry=industry, organisation__regionCode__isnull=False).values('organisation__regionCode__code').annotate(count=Count('organisation'))
+            regions = ProjectOrganisation.objects.filter(project__projectindustry__industry=industry,
+                                                         organisation__regionCode__isnull=False).values(
+                'organisation__regionCode__code').annotate(count=Count('organisation'))
             results = []
             total = 0
             for region in regions:
                 r = Region.objects.get(code=region['organisation__regionCode__code'])
-                ids = ProjectOrganisation.objects.filter(organisation__regionCode=r.code, project__projectindustry__industry=industry)
+                ids = ProjectOrganisation.objects.filter(organisation__regionCode=r.code,
+                                                         project__projectindustry__industry=industry)
                 res = {'name': r.nutsCode,
                        'count': region['count'],
                        'organisations': Organisation.objects.filter(id__in=ids.values_list('organisation')),
@@ -149,9 +159,11 @@ def explorer(request):
                 results.append(res)
 
             for res in results:
-                res['p'] = res['count']/float(total)
+                res['p'] = res['count'] / float(total)
 
-            industries[Industry.objects.get(id=industry).name] = sorted(results, key=lambda k: (len(k['projects']), k['count']), reverse=True)
+            industries[Industry.objects.get(id=industry).name] = sorted(results,
+                                                                        key=lambda k: (len(k['projects']), k['count']),
+                                                                        reverse=True)
 
         return render(request, 'explorer.html', {'results': industries})
 
@@ -161,163 +173,12 @@ def projects(request):
     return render(request, 'projects.html', {'projects': res})
 
 
-# def init(request):
-#     # response = urllib2.urlopen('http://cordis.europa.eu/data/cordis-h2020projects.csv')
-#     # projects_df = pd.read_table(response, quotechar='"', sep=';')
-#     # projects_df.dropna(subset=['startDate', 'endDate'], inplace=True)
-#     #
-#     # for i, r in projects_df.iterrows():
-#     #     p = Project()
-#     #     p.id = r['id']
-#     #     p.acronym = r['acronym']
-#     #     p.status = r['status']
-#     #     p.programme = r['programme']
-#     #     p.topics = r['topics']
-#     #     p.frameworkProgramme = r['frameworkProgramme']
-#     #     p.title = r['title']
-#     #     p.startDate = r['startDate']
-#     #     p.endDate = r['endDate']
-#     #     if r['projectUrl'] != "nan":
-#     #         p.projectUrl = r['projectUrl']
-#     #     p.objective = r['objective']
-#     #     p.totalCost = str(r['totalCost']).replace(',', '.')
-#     #     p.call = r['call']
-#     #     p.fundingScheme = r['fundingScheme']
-#     #     p.save()
-#     #
-#     # response = urllib2.urlopen('http://cordis.europa.eu/data/cordis-h2020organizations.csv')
-#     # organisations_df = pd.read_table(response, quotechar='"', sep=';')
-#     #
-#     # for i, r in organisations_df.iterrows():
-#     #     if Organisation.objects.filter(id=r['id']).count() == 0:
-#     #         o = Organisation()
-#     #         o.id = r['id']
-#     #         o.name = r['name']
-#     #         o.shortName = r['shortName']
-#     #         o.activityType = r['activityType']
-#     #         o.country = r['country']
-#     #         o.street = r['street']
-#     #         o.city = r['city']
-#     #         o.postCode = r['postCode']
-#     #         # o.regionCode = r['regionCode']
-#     #         o.organizationUrl = r['organizationUrl']
-#     #         o.save()
-#     #
-#     # for i, r in organisations_df.iterrows():
-#     #     if Project.objects.filter(id=r['projectID']).count() == 1 and Organisation.objects.filter(id=r['id']).count() == 1:
-#     #         o = ProjectOrganisation()
-#     #         o.project_id = r['projectID']
-#     #         o.organisation_id = r['id']
-#     #         o.role = r['role']
-#     #         o.endOfParticipation = r['endOfParticipation']
-#     #         if pd.isnull(r['ecContribution']):
-#     #             o.ecContribution = 0
-#     #         else:
-#     #             o.ecContribution = str(r['ecContribution']).replace(',', '.')
-#     #         o.save()
-#     #
-#     # countries = ["AT", "BE", "BG", "CH", "CY", "CZ", "DE", "DK", "EE", "EL", "FI", "HR", "HU", "IS", "IT", "LI", "LT", "LU", "LV", "MT", "NL", "NO", "RO", "SI", "SK", "TR", "UK"]
-#     #
-#     # for country in countries:
-#     #     organisations_qs = Organisation.objects.filter(country=country)
-#     #     mapping_df = pd.read_table("C:\Users\Ryan Faulkner\Documents\Online S3\Region Data\hide\pc_" + country.lower() + "_NUTS-2010.txt", sep=';', dtype='str')
-#     #
-#     #     for organisation in organisations_qs:
-#     #         res = mapping_df[mapping_df["CODE"] == organisation.postCode]
-#     #         try:
-#     #             if len(res["NUTS_3"] > 0):
-#     #                 organisation.regionCode_id = Region.objects.get(nutsCode=res["NUTS_3"].iloc[0])
-#     #                 organisation.save()
-#     #         except Region.DoesNotExist:
-#     #             print organisation.postCode
-#
-#     return HttpResponse("OK!")
-#
-#
-# import json
-# import requests
-# import time
-#
-#
-# class Kales(object):
-#     def __init__(self, api_key):
-#         self.api_key = api_key
-#
-#     def _request(self, content, content_type, **kwargs):
-#         headers = {
-#             "content-type": content_type,
-#             "omitOutputtingOriginalText": "true",
-#             "outputFormat": "application/json",
-#             "x-ag-access-token": self.api_key,
-#             "x-calais-language": "English"
-#         }
-#         headers.update(kwargs)
-#         return requests.post("https://api.thomsonreuters.com/permid/calais", data=content, headers=headers)
-#
-#     def analyze(self, project, content, content_type="text/raw", **kwargs):
-#         if not content or not content.strip():
-#             return None
-#
-#         response = self._request(content, content_type, **kwargs)
-#         response.raise_for_status()
-#         content = json.loads(response.content)
-#
-#         for element in list(content.values()):
-#             for key, value in list(element.items()):
-#                 if isinstance(value, str) and value.startswith("http://") and value in content:
-#                     element[key] = content[value]
-#         for key, value in list(content.items()):
-#             o = ProjectTopics()
-#             o.project = project
-#             if '_typeGroup' in value:
-#                 o.typeGroup = value['_typeGroup']
-#             if '_type' in value:
-#                 o.type = value['_type']
-#             if 'name' in value:
-#                 o.name = value['name']
-#             if 'importance' in value:
-#                 o.importance = value['importance']
-#             if 'relevance' in value:
-#                 o.relevance = value['relevance']
-#             if 'confidencelevel' in value:
-#                 o.confidenceLevel = value['confidencelevel']
-#             o.save()
-#
-#             if "_typeGroup" in value:
-#                 group = value["_typeGroup"]
-#                 if group not in content:
-#                     content[group] = []
-#                 del value["_typeGroup"]
-#                 content[group].append(value)
-#         return content
-#
-#
-# def annotate(request):
-#     kales = Kales(api_key="4rL1kyDbDvnJZQqtBipa1SAhCc9ovyLA")
-#     projects = Project.objects.filter(id__in=ProjectOrganisation.objects.filter(organisation__regionCode__code__isnull=False).values_list('project')).exclude(id__in=ProjectTopics.objects.all().values_list('project').distinct())
-#     for project in projects:
-#         kales.analyze(project, project.title.encode('utf-8') + " " + project.objective.encode('utf-8'))
-#         time.sleep(1)
-#
-#     # industries = ProjectTopics.objects.filter(typeGroup="industry").values_list("name").distinct()
-#     # for industry in industries:
-#     #     i = Industry()
-#     #     i.name = industry[0].encode('utf-8').replace(' - NEC', '')
-#     #     i.save()
-#     #
-#     # project_ind = ProjectTopics.objects.filter(typeGroup="industry")
-#     # for p_i in project_ind:
-#     #     o = ProjectIndustry()
-#     #     o.project = p_i.project
-#     #     o.industry = Industry.objects.filter(name=p_i.name.encode('utf-8').replace(' - NEC', ''))[0]
-#     #     o.relevance = p_i.relevance
-#     #     o.save()
-#
-#     return HttpResponse('OK!')
-
-
 def query(request):
-    bookmarks = Project.objects.filter(id__in=Bookmark.objects.filter(user=request.session['opendata_profile']['email']).values_list('project', flat=True))
+    if 'opendata_profile' in request.session:
+        bookmarks = Project.objects.filter(
+            id__in=Bookmark.objects.filter(user=request.session['opendata_profile']['email']).values_list('project', flat=True))
+    else:
+        bookmarks = []
 
     try:
         q = request.GET['query'].strip()
@@ -340,15 +201,27 @@ def query(request):
         o = ''
 
     if c == 'region':
-        pro_org = ProjectOrganisation.objects.filter(organisation__regionCode__nutsCode__icontains=q)
+        filter_dict = {'organisation__regionCode__nutsCode__icontains': q}
+        try:
+            filter_dict['project__objective__icontains'] = request.GET['topic']
+        except MultiValueDictKeyError:
+            pass
+        pro_org = ProjectOrganisation.objects.filter(**filter_dict)
         projects = Project.objects.filter(id__in=pro_org.values_list('project_id'))
         organisations = Organisation.objects.filter(id__in=pro_org.values_list('organisation_id'))
     else:
-        filter_dict = {c + "__icontains": q}
-        projects = Project.objects.filter(**filter_dict).order_by(o+s)
         if c == 'id':
+            filter_dict = {c: q}
+        else:
+            filter_dict = {c + "__icontains": q}
+        projects = Project.objects.filter(**filter_dict).order_by(o + s)
+        if c == 'id' or c == 'objective':
             organisations = Organisation.objects.filter(id__in=ProjectOrganisation.objects.filter(project__in=projects.values_list('id')).values_list('organisation_id'))
-            pro_org = ProjectOrganisation.objects.filter(project_id__in=projects.values_list('id')).values('organisation__shortName', 'organisation__name', 'organisation__street', 'organisation__city', 'organisation__country', 'organisation__postCode', 'organisation__regionCode__nutsCode', 'organisation__organizationUrl', 'organisation__activityType', 'role', 'endOfParticipation', 'ecContribution', 'project__totalCost')
+            pro_org = ProjectOrganisation.objects.filter(project_id__in=projects.values_list('id')).values(
+                'organisation__shortName', 'organisation__name', 'organisation__street', 'organisation__city',
+                'organisation__country', 'organisation__postCode', 'organisation__regionCode__nutsCode',
+                'organisation__organizationUrl', 'organisation__activityType', 'role', 'endOfParticipation',
+                'ecContribution', 'project__totalCost')
         else:
             organisations = []
             pro_org = []
@@ -368,7 +241,12 @@ def query(request):
     except EmptyPage:
         project_page = project_paginator.page(project_paginator.num_pages)
 
-    return render(request, 'query.html', {'query': q, 'queryContext': c, 'records': r, 'sort': s, 'no': no, 'projects': project_page, 'org': organisations, 'pro_org': pro_org, 'bookmarks': bookmarks})
+    if s not in ["startDate", "endDate"]:
+        s = "Query"
+
+    return render(request, 'query.html', {'query': q, 'queryContext': c, 'records': r, 'sort': s, 'order': o, 'no': no,
+                                          'projects': project_page, 'org': organisations, 'pro_org': pro_org,
+                                          'bookmarks': bookmarks})
 
 
 def bookmarked(request):
@@ -386,3 +264,60 @@ def bookmarked(request):
             bm.save()
         return HttpResponse('OK')
     return HttpResponse('Error')
+
+
+def exporter(request):
+    return render(request, 'exporter.html')
+
+
+def export(request):
+    if request.method == 'POST':
+        filter_dict = {k: v for k, v in request.POST.items() if v}
+        del filter_dict['csrfmiddlewaretoken']
+        qs = ProjectOrganisation.objects.filter(**filter_dict).select_related("project", "organisation")
+
+    if request.method == 'GET':
+        if 'bookmarks' in request.GET:
+            qs = ProjectOrganisation.objects.filter(project_id__in=Bookmark.objects.filter(
+                user=request.session['opendata_profile']['email'])).select_related("project", "organisation")
+        else:
+            qs = ProjectOrganisation.objects.all().select_related("project", "organisation")
+
+    df = pd.DataFrame(list(
+        qs.values('project__acronym', 'project__title', 'project__objective', 'project__status', 'project__projectUrl',
+                  'project__fundingScheme', 'project__call', 'project__totalCost', 'project__projectindustry__industry',
+                  'project__topics', 'organisation__name', 'organisation__shortName', 'organisation__activityType',
+                  'organisation__regionCode__description', 'organisation__city', 'organisation__country',
+                  'organisation__organizationUrl', 'role', 'endOfParticipation', 'ecContribution')))
+
+    io = StringIO.StringIO()
+
+    writer = pd.ExcelWriter('temp.xlsx', engine='xlsxwriter')
+    writer.book.filename = io
+
+    df.to_excel(writer, sheet_name='Successful Grant Applications')
+    writer.save()
+
+    response = HttpResponse(io.getvalue(),
+                            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = "attachment; filename=RIS3_OpenDataTool_Export.xlsx"
+
+    return response
+
+
+def map(request):
+    return render(request, 'map.html')
+
+
+def map_data(request):
+    if request.is_ajax():
+        sql = """SELECT 1 AS id, nutsCode AS code, nutsCode || ' - ' || OpenDataTool_region.description AS label, latitude, longitude, COUNT(project_id) AS projects FROM OpenDataTool_projectorganisation
+                 LEFT OUTER JOIN OpenDataTool_organisation ON OpenDataTool_projectorganisation.organisation_id = OpenDataTool_organisation.id
+                 LEFT OUTER JOIN OpenDataTool_project ON OpenDataTool_projectorganisation.project_id = OpenDataTool_project.id
+                 LEFT OUTER JOIN OpenDataTool_region ON OpenDataTool_organisation.regionCode_id = OpenDataTool_region.code
+                 WHERE objective LIKE '%{}%'
+                 GROUP BY regionCode_id""".format(request.POST.get('term', ''))
+        data = {}
+        for c in Organisation.objects.raw(sql):
+            data[c.code] = {'label': c.label, 'latitude': c.latitude, 'longitude': c.longitude, 'projects': c.projects}
+        return JsonResponse(json.dumps(data), safe=False)

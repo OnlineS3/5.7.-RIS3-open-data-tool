@@ -1,0 +1,101 @@
+<div class="panel panel-default affix-top">
+    <div class="panel-heading" style="text-align: center; background-color: white;">
+        Data Exporter <i class="fa fa-download"></i>
+    </div>
+
+    <div class="panel-body">
+        <a href="{% url 'export' %}">All Data</a><br/>
+        <a href="{% url 'export' %}?bookmarks=true">Bookmarks</a><br/>
+        <a data-toggle="modal" data-target="#modal">Query Result</a>
+    </div>
+
+    <div id="modal" class="modal fade" role="form">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h4 class="modal-title">Export Query</h4>
+                </div>
+
+                <div class="modal-body">
+                    <form id="query" action="{% url 'export' %}" method="post" class="form-horizontal">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <h4 style="text-align: left; margin-left: 165px">Project</h4>
+
+                            <label class="control-label col-sm-2" for="title">Title:</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="title" type="text" name="project__title__contains">
+                            </div>
+
+                            <label class="control-label col-sm-2" for="acronym">Acronym:</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="acronym" type="text" name="project__acronym__contains">
+                            </div>
+
+                            <label class="control-label col-sm-2" for="objective">Objective:</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="objective" type="text" name="project__objective__contains">
+                            </div>
+
+                            <label class="control-label col-sm-2" for="call">Call:</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="call" type="text" name="project__call__contains">
+                            </div>
+
+                            <label class="control-label col-sm-2" for="programme">Programme:</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="programme" type="text" name="project__programme__contains">
+                            </div>
+
+                            <label class="control-label col-sm-2" for="funding">Funding Scheme:</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="funding" type="text" name="project__fundingScheme__contains">
+                            </div>
+
+                            <label class="control-label col-sm-2" for="status">Status:</label>
+                            <div class="col-sm-10">
+                                <select class="form-control" id="status" name="project__status__contains">
+                                    <option></option>
+                                    <option value="SIGNED">Signed</option>
+                                    <option value="TERMINATED">Terminated</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <h4 style="text-align: left; margin-left: 165px">Organisation</h4>
+                            <label class="control-label col-sm-2" for="name">Name:</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="name" type="text" name="organisation__name__contains">
+                            </div>
+
+                            <label class="control-label col-sm-2" for="region">NUTS Region:</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" id="region" type="text" name="organisation__regionCode__description__contains">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <h4 style="text-align: left; margin-left: 165px">Connection</h4>
+                            <label class="control-label col-sm-2" for="role">Role:</label>
+                            <div class="col-sm-10">
+                                <select class="form-control" id="role" form="query" name="role">
+                                    <option></option>
+                                    <option value="coordinator">Coordinator</option>
+                                    <option value="participant">Participant</option>
+                                    <option value="hostInstitution">Host Institution</option>
+                                    <option value="beneficiary">Beneficiary</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <input type="submit" value="Submit" class="btn btn-default" style="float: right">
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

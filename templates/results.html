@@ -75,7 +75,7 @@
                             </a>
                         </div>
                         <div id="{{ forloop.counter }}_pnl" class="panel-body panel-collapse collapse {% if results|length_is:"1" %}in{% endif %}">
-                            <p>{{ result.projects|length }} relevant projects in this region by {{ result.organisations|length }} organisations.</p>
+                            <p>{{ result.projects|length }} relevant project(s) in this region by {{ result.organisations|length }} organisation(s).</p>
                             {% include "projects.html" with projects=result.projects %}
                         </div>
                     </div>

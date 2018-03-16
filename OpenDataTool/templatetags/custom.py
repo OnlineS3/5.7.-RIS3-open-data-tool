@@ -10,16 +10,6 @@ def split(value, sep=';'):
         return value.split(sep)
 
 
-@register.filter(name='country_code')
-def country_code(value):
-    value = str(value).lower()
-    if value == 'uk':
-        value = 'gb'
-    elif value == 'el':
-        value = 'gr'
-    return value
-
-
 @register.filter(name='is_nan')
 def is_nan(value):
     if str(value) != 'nan':
@@ -39,21 +29,3 @@ def url_replace(context, **kwargs):
             pass
     query.update(kwargs)
     return mark_safe(query.urlencode())
-
-
-@register.filter(name='in_region')
-def in_region(organisations, region_id):
-    return organisations.filter(regionCode_id=region_id)
-
-
-@register.filter(name='divide')
-def divide(value, arg):
-    try:
-        return int(value)/float(arg)
-    except (ValueError, ZeroDivisionError):
-        return None
-
-
-@register.filter(name='multiply')
-def multiply(value, arg):
-    return value*arg

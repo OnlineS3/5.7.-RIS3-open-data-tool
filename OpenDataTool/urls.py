@@ -2,14 +2,12 @@
 The `urlpatterns` list routes URLs to views.
 """
 from django.conf.urls import url, include
-from django.contrib import admin
 from django.contrib.auth import views as auth_views
 
 from OpenDataTool.views import *
 
 urlpatterns = [
     # Development
-    url(r'^admin/', admin.site.urls),
     url(r'^signup/$', signup, name='signup'),
     url(r'^login/$', auth_views.login, name='login'),
     url(r'^logout/$', auth_views.logout, {'next_page': '/about'}, name='logout'),
@@ -18,8 +16,8 @@ urlpatterns = [
 
     # Application
     url(r'^about/$', about, name='about'),
-    url(r'^guide/$', guidepage, name='guide'),
-    url(r'^pdf/$', guide, name='pdf'),
+    url(r'^guide/$', guide, name='guide'),
+    url(r'^pdf/$', pdf, name='pdf'),
     url(r'^related/$', related, name='related'),
 
     url(r'^search/$', search, name='search'),
@@ -30,8 +28,11 @@ urlpatterns = [
     url(r'^query/$', query, name='query'),
     url(r'^bookmarked/$', bookmarked, name='bookmarked'),
 
-    # url(r'^init/$', init, name="init"),
-    # url(r'^annotate/$', annotate, name="annotate"),
+    url(r'^exporter/$', exporter, name='exporter'),
+    url(r'^export/$', export, name='export'),
+
+    url(r'^map/$', map, name='map'),
+    url(r'^mapdata/$', map_data, name='mapdata'),
 
     # Base URL
     url(r'^$', about),

@@ -1,8 +1,15 @@
 # -*- coding:utf-8 -*-
 
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils.encoding import python_2_unicode_compatible
+
+
+class FrameworkProgramme(models.Model):
+    id = models.CharField(primary_key=True, max_length=4)
+    frameworkProgramme = models.CharField(max_length=50)
+    shortName = models.CharField(max_length=5)
+    startYear = models.PositiveSmallIntegerField()
+    endYear = models.PositiveSmallIntegerField()
 
 
 @python_2_unicode_compatible
@@ -13,6 +20,8 @@ class Region(models.Model):
     parent = models.ForeignKey("self", blank=True, null=True)
     nutsCode = models.CharField(max_length=6)
     description = models.CharField(max_length=255)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
 
     def __str__(self):
         if self.nutsCode != "nan":
@@ -33,29 +42,29 @@ class Region(models.Model):
 
 class Project(models.Model):
     id = models.IntegerField(primary_key=True)
-    acronym = models.CharField(max_length=100)
+    acronym = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=100)
-    programme = models.CharField(max_length=100)
+    programme = models.CharField(max_length=100, blank=True, null=True)
     topics = models.CharField(max_length=100)
     frameworkProgramme = models.CharField(max_length=5)
     title = models.CharField(max_length=250)
     startDate = models.DateField(blank=True, null=True)
     endDate = models.DateField(blank=True, null=True)
     projectUrl = models.URLField(blank=True, null=True)
-    objective = models.CharField(max_length=3000)
-    totalCost = models.FloatField()
-    call = models.CharField(max_length=100)
-    fundingScheme = models.CharField(max_length=100)
+    objective = models.CharField(max_length=3000, blank=True, null=True)
+    totalCost = models.FloatField(blank=True, null=True, default=None)
+    call = models.CharField(max_length=100,blank=True, null=True)
+    fundingScheme = models.CharField(max_length=100, blank=True, null=True)
 
 
 class Organisation(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=250)
-    shortName = models.CharField(max_length=100)
+    shortName = models.CharField(max_length=100, blank=True, null=True)
     activityType = models.CharField(max_length=3)
     country = models.CharField(max_length=2)
-    street = models.CharField(max_length=250)
-    city = models.CharField(max_length=100)
+    street = models.CharField(max_length=250, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
     postCode = models.CharField(max_length=7, null=True, blank=True)
     regionCode = models.ForeignKey(Region, blank=True, null=True)
     organizationUrl = models.URLField()
@@ -108,3 +117,42 @@ class Notification(models.Model):
     project = models.ForeignKey(Project)
     message = models.CharField(max_length=140)
     created = models.DateTimeField(auto_now_add=True)
+
+
+class Topic(models.Model):
+    title = models.CharField(max_length=300)
+    topicRcn = models.IntegerField(primary_key=True)
+    topicCode = models.CharField(max_length=32)
+    legalBasisRcn = models.IntegerField(null=True, blank=True)
+    legalBasisCode = models.CharField(max_length=32, null=True, blank=True)
+
+
+class Call(models.Model):
+    callIdentifier = models.CharField(max_length=100, primary_key=True)
+    active = models.BooleanField()
+    title = models.CharField(max_length=300)
+    frameworkProgramme = models.CharField(max_length=5)
+    programme = models.CharField(max_length=100)
+    wpPart = models.CharField(max_length=100)
+    publicationDate = models.DateField()
+
+
+class CallBudget(models.Model):
+    call = models.ForeignKey(Call)
+    topic = models.CharField(max_length=300)
+    budget = models.FloatField()
+    year = models.PositiveIntegerField()
+    stages = models.CharField(max_length=300)
+    openDate = models.DateField()
+    deadline = models.DateField()
+
+
+class OrganisationActivityType(models.Model):
+    code = models.CharField(primary_key=True, max_length=3)
+    title = models.CharField(max_length=100)
+
+
+class PostcodeRegion(models.Model):
+    code = models.CharField(max_length=7)
+    nutsCode = models.CharField(max_length=6)
+    country = models.CharField(max_length=2)

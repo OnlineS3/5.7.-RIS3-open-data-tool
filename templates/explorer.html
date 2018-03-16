@@ -3,31 +3,18 @@
 {% load mathfilters %}
 
 {% block addHead %}
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-
-    <style>
-    .pagetitle {
-        margin: 0;
-        color: #de1515;
-        padding: 1rem 0 0rem 1rem;
-        font-style: normal;
-        font-weight: 400;
-        clear: both;
-        font-size: 21px;
-        font-family: tahoma
-    }
-    </style>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="{% static "css/other.css" %}"/>
 {% endblock %}
 
 <!-- Application's space -->
 {% block content %}
 <div class="site-content">
 
-	<article id="main-content">
+	<article id="main-content" style="width: 100%">
 
 		<h2 class="pagetitle">Data Explorer</h2>
 
@@ -139,52 +126,29 @@
                     <!-- Pie chart -->
                     <div id="{{ forloop.counter }}_chart" style="width:100%; height:400px; margin:0 auto"></div>
                     <script type="application/javascript">
-                        var dict = [];
+                        var values = [];
+                        var labels = [];
                         {% for i in result %}
-                            dict.push({
-                                name: "{{ i.name }}",
-                                val: {{ i.count }},
-                                y: {{ i.p }}
-                            });
+                            values.push(i.count);
+                            labels.push(i.name);
                         {% endfor %}
-                        Highcharts.chart('{{ forloop.counter }}_chart', {
-                            chart: {
-                                plotBackgroundColor: null,
-                                plotBorderWidth: null,
-                                plotShadow: false,
-                                type: 'pie'
-                            },
-                            title: {
-                                text: '{{ k }}'
-                            },
-                            tooltip: {
-                                pointFormat: '{series.name}: <br/><b>{point.val} Project(s)</b><br/><b>{point.percentage:.1f}%</b>'
-                            },
-                            plotOptions: {
-                                pie: {
-                                    allowPointSelect: true,
-                                    cursor: 'pointer',
-                                    dataLabels: {
-                                        enabled: true,
-                                        format: '<b>{point.name}</b>: <br/><b>{point.val} Project(s)</b><br/>{point.percentage:.1f} %',
-                                        style: {
-                                            color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
-                                        }
-                                    }
-                                }
-                            },
-                            series: [{
-                                name: 'Share',
-                                colorByPoint: true,
-                                data: dict
-                            }]
-                        });
+
+                        var data = [{
+                            values: values,
+                            labels: labels,
+                            type: 'pie'
+                        }];
+                        var layout = {
+                            title: 'Funding Distribution',
+                            width: '100%'
+                        };
+                        Plotly.newPlot(document.createElement('div'), data, layout);
                     </script>
                     <!-- -->
                 </div>
             </div>
         {% endfor %}
-        <button type="submit" class="button btn-primary" onclick="location.href='{% url 'search' %}'"><span class="fa fa-search"></span><br/>New Search</button>
+        <button type="submit" class="btn btn-primary" onclick="location.href='{% url 'search' %}'"><span class="fa fa-search"></span><br/>New Search</button>
 
 	</article>
 
@@ -194,7 +158,7 @@
         </a>
 		<div></div>
         <a href="{% url 'search' %}">
-		    <button> Access to application  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
+		    <button> Start New Search  <img src="{% static 'img/access-icon.png' %}" width="20"></button>
         </a>
 	</aside>
 
